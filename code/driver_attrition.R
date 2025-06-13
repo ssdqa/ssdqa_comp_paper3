@@ -14,13 +14,14 @@ attrition_counts$step1 <- s1_ch %>%
   collect()
 
 
-#' `Step 2: Patients with SCA diagnosis` 
+#' `Step 2: Patients with SCA diagnosis (& first dx within study period)` 
 s2_ch <- cdm_tbl('condition_occurrence') %>%
   inner_join(load_codeset('dx_sca'), by = c('condition_concept_id' = 'concept_id')) %>%
   inner_join(s1_ch %>% select(site, person_id)) %>%
   group_by(site, person_id) %>%
   filter(condition_start_date == min(condition_start_date)) %>%
   rename('first_sca_dx' = 'condition_start_date') %>%
+  filter(first_sca_dx >= '2011-01-01' & first_sca_dx <= '2024-12-31') %>%
   select(site, person_id, first_sca_dx) %>% compute_new()
 
 attrition_counts$step2 <- s2_ch %>%
