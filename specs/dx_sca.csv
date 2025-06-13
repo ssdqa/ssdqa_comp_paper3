@@ -1,0 +1,12 @@
+concept_id,concept_name,concept_code,vocabulary_id
+26942,Hemoglobin SS disease with crisis,417425009,SNOMED
+30683,Hemoglobin SS disease without crisis,416180004,SNOMED
+4209085,Hemoglobin SS disease with vasoocclusive crisis,440206000,SNOMED
+4130068,Sickle cell-beta^0^-thalassemia,127043001,SNOMED
+4131913,Sickle cell-delta beta^0^-thalassemia,127044007,SNOMED
+22281,Sickle cell-hemoglobin SS disease,127040003,SNOMED
+443738,Sickle cell-thalassemia disease with crisis,416826005,SNOMED
+321263,Sickle cell-thalassemia disease without crisis,417048006,SNOMED
+315523,Sickle cell-thalassemia disease,36472007,SNOMED
+4131914,Sickle cell anemia with coexistent alpha-thalassemia,127045008,SNOMED
+4121115,Sickle cell anemia with high hemoglobin F,234391009,SNOMED

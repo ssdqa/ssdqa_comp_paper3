@@ -1,0 +1,9 @@
+"concept_id","concept_code","concept_name","vocabulary_id"
+45756799,OMOP4821944,Pathology - Hematology,ABMS
+45756811,OMOP4822028,Pediatric Hematology-Oncology,ABMS
+38004501,"82",Hematology,Medicare Specialty
+38004502,"83",Hematology / Oncology,Medicare Specialty
+38003871,"207RH0000X","Allopathic & Osteopathic Physicians, Internal Medicine, Hematology",NUCC
+38003873,"207RH0003X","Allopathic & Osteopathic Physicians, Internal Medicine, Hematology & Oncology",NUCC
+38003929,"207ZH0000X","Allopathic & Osteopathic Physicians, Pathology, Hematology",NUCC
+38003953,"2080P0207X","Allopathic & Osteopathic Physicians, Pediatrics, Pediatric Hematology-Oncology",NUCC

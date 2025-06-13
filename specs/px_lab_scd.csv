@@ -1,0 +1,8 @@
+"concept_id","concept_code","concept_name","vocabulary_id"
+4015179,"104144006","Determination of hemoglobin subtype","SNOMED"
+725100,"81364","HBB (hemoglobin, subunit beta) (eg, sickle cell anemia, beta thalassemia, hemoglobinopathy); full gene sequence","CPT4"
+2212388,"83021","Hemoglobin fractionation and quantitation; chromatography (eg, A2, S, C, and/or F)","CPT4"
+2212387,"83020","Hemoglobin fractionation and quantitation; electrophoresis (eg, A2, S, C, and/or F)","CPT4"
+40481312,"441921009","Determination of hemoglobin subtype using electrophoresis","SNOMED"
+725099,"81363","HBB (hemoglobin, subunit beta) (eg, sickle cell anemia, beta thalassemia, hemoglobinopathy); duplication/deletion variant(s)","CPT4"
+927153,"81443","Genetic testing for severe inherited conditions (eg, cystic fibrosis, Ashkenazi Jewish-associated disorders [eg, Bloom syndrome, Canavan disease, Fanconi anemia type C, mucolipidosis type VI, Gaucher disease, Tay-Sachs disease], beta hemoglobinopathies, p","CPT4"
