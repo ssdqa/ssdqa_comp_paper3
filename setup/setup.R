@@ -13,6 +13,7 @@ library(dbplyr)
 library(lubridate)
 library(squba.gen)
 library(RPostgres)
+library(squba)
 
 # Source file with wrapper function
 source(file.path('setup', 'argos_wrapper.R'))

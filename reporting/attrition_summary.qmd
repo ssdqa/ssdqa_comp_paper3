@@ -1,0 +1,102 @@
+---
+title: "SCA Attrition Summary"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(cohortattrition)
+library(gtsummary)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+```
+
+## Cohort Attrition
+
+### Multi-Site, Exploratory
+
+```{r, include=FALSE}
+
+ca_ms_exp <- ca_output(process_output = results_tbl('ca_ms_exp_cs') %>%
+                         collect(),
+                       var_col = 'num_pts')
+
+```
+
+```{r}
+
+ca_ms_exp[[2]]
+
+```
+
+::: {.panel-tabset}
+
+# Number of Patients
+```{r}
+
+make_interactive_squba(ca_ms_exp[[1]])
+
+```
+
+# Retention
+```{r}
+
+ca_ms_exp2 <- ca_output(process_output = results_tbl('ca_ms_exp_cs') %>%
+                         collect(),
+                       var_col = 'prop_retained_start')
+
+make_interactive_squba(ca_ms_exp2[[1]])
+
+```
+
+:::
+
+### Multi-Site, Anomaly Detection
+
+::: {.panel-tabset}
+
+# Number of Patients
+```{r}
+
+ca_ms_anom <- ca_output(process_output = results_tbl('ca_ms_anom_cs_num') %>%
+                         collect())
+
+make_interactive_squba(ca_ms_anom)
+
+```
+
+# Retention
+```{r}
+
+ca_ms_anom2 <- ca_output(process_output = results_tbl('ca_ms_anom_cs_prs') %>%
+                         collect(),
+                         var_col = 'prop_retained_start')
+
+make_interactive_squba(ca_ms_anom2)
+
+```
+
+:::
+
+## Table One
+
+```{r}
+
+results_tbl('table1_input') %>%
+  collect() %>%
+  tbl_summary(by = site, include = -c(person_id, birth_date)) %>%
+  add_overall(last = TRUE) %>%
+  bold_labels() %>%
+  italicize_levels()
+
+```
