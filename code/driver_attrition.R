@@ -55,10 +55,31 @@ s4_ch <- cdm_tbl('measurement_labs') %>%
          measurement_date <= '2024-12-31') %>%
   inner_join(load_codeset('lab_scd'), by = c('measurement_concept_id' = 'concept_id')) %>%
   inner_join(s3_ch) %>%
-  distinct(site, person_id) %>%
-  compute_new()
+  select(site, person_id, measurement_concept_id, value_as_number, value_as_concept_id,
+         value_as_concept_name, value_source_value, subtyping) 
 
-attrition_counts$step4 <- s4_ch %>%
+hbs_parsing <- s4_ch %>% 
+  filter(grepl('Hb S =|= Hb S|= HB S', value_source_value)) %>%
+  collect() %>%
+  mutate(value_as_number = ifelse(is.na(value_as_number),readr::parse_number(value_source_value),
+                                  value_as_number)) %>%
+  filter(value_as_number > 50) %>%
+  distinct(site, person_id)
+
+hbs_parsing_db <- copy_to_new(df = hbs_parsing)
+
+remaining_labs <- s4_ch %>%
+  filter(!grepl('Hb S =|= Hb S|= HB S', value_source_value)) %>%
+  mutate(keep = case_when(subtyping %in% c('quant') & value_as_number > 50 ~ TRUE,
+                          subtyping %in% c('text') & 
+                            grepl('fsa$|fs$| SAF | SA | SF | S | FS | FSA | SFA | SFA2 ', value_source_value) ~ TRUE,
+                          TRUE ~ FALSE)) %>%
+  filter(keep) %>%
+  distinct(site, person_id) %>%
+  compute_new() %>%
+  union(hbs_parsing_db)
+
+attrition_counts$step4 <- remaining_labs %>%
   group_by(site) %>%
   summarise(num_pts = n_distinct(person_id)) %>%
   mutate(step_number = 4,
@@ -69,7 +90,7 @@ attrition_counts$step4 <- s4_ch %>%
 s5_ch <- cdm_tbl('visit_occurrence') %>%
   filter(visit_start_date >= '2011-01-01' &
            visit_start_date <= '2024-12-31') %>%
-  inner_join(s4_ch) %>%
+  inner_join(remaining_labs) %>%
   group_by(site, person_id) %>%
   summarise(n_visit = n_distinct(visit_occurrence_id)) %>%
   filter(n_visit > 3) %>% compute_new()
@@ -140,7 +161,7 @@ output_tbl(attrition_full, 'attrition_counts')
 
 #' ** Table 1 **
 
-## Demographics
+##' `Demographics`
 demos <- cdm_tbl('person') %>%
   select(site, person_id, birth_date, gender_concept_name, 
          race_concept_name, ethnicity_concept_name) %>%
@@ -156,7 +177,7 @@ demos <- cdm_tbl('person') %>%
   select(-c(start_date, end_date)) %>% 
   collect()
 
-## Visit Utilization
+##' `Utilization`
 gen_visits <- cdm_tbl('visit_occurrence') %>%
   filter(visit_start_date >= '2011-01-01' &
            visit_start_date <= '2024-12-31') %>%
@@ -181,7 +202,7 @@ visits <- gen_visits %>%
   pivot_wider(names_from = visit_grp,
               values_from = n_visit)
 
-## Hydroxyurea Exposure
+##' `Hydroxyurea Exposure`
 hdrxy <- cdm_tbl('drug_exposure') %>%
   filter(drug_exposure_start_date >= '2011-01-01' &
            drug_exposure_start_date <= '2024-12-31') %>%
@@ -204,14 +225,8 @@ t1_input <- demos %>%
 
 output_tbl(t1_input, 'table1_input')
 
-# t1_input %>%
-#   gtsummary::tbl_summary(by = site, include = -c(person_id, birth_date)) %>%
-#   gtsummary::add_overall(last = TRUE) %>%
-#   bold_labels() %>%
-#   italicize_levels()
 
-
-#' ** SQUBA Cohort Attrition Processing **
+#' ** SQUBA Cohort Attrition **
 
 ca_ms_exp <- ca_process(attrition_tbl = results_tbl('attrition_counts') %>%
                           collect(),

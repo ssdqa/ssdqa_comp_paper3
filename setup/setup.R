@@ -30,7 +30,7 @@ initialize_session(session_name = 'ssdqa_paper3',
                    results_tag = '')
 
 # Source cohort_* files
-for (fn in list.files('code', 'cohort_.+\\.R', full.names = TRUE)){
+for (fn in list.files('code', 'cohorts|cohort_.+\\.R', full.names = TRUE)){
   source(fn)
   }
 rm(fn)
