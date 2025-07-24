@@ -1,0 +1,20 @@
+visit_concept_id,visit_type
+9201,inpatient
+9202,outpatient
+2000000469,outpatient (non-9202)
+581399,outpatient (non-9202)
+44814711,outpatient (non-9202)
+9203,emergency department
+2000000048,emergency department
+9201,hematology specialists
+9202,hematology specialists
+2000000469,hematology specialists
+581399,hematology specialists
+44814711,hematology specialists
+9203,hematology specialists
+2000000048,hematology specialists
+2000000088,hematology specialists
+2000000104,hematology specialists
+44814710,hematology specialists
+2000001532,hematology specialists
+44814649,hematology specialists

@@ -41,6 +41,9 @@ s3_ch <- cdm_tbl('person') %>%
          age_first_dx = as.numeric(age_first_dx) / 365.25) %>%
   filter(age_first_dx < 18)
 
+output_tbl(s3_ch %>% distinct(site, person_id, first_sca_dx),
+           'step3_cohort')
+
 attrition_counts$step3 <- s3_ch %>%
   group_by(site) %>%
   summarise(num_pts = n_distinct(person_id)) %>%

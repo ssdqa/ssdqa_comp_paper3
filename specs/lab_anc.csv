@@ -1,0 +1,16 @@
+concept_id,concept_code,concept_name,vocabulary_id,cluster
+3018199,26507-4,Band form neutrophils [#/volume] in Blood,LOINC,anc
+3001465,30229-9,Band form neutrophils [#/volume] in Blood by Automated count,LOINC,anc
+3008939,763-3,Band form neutrophils [#/volume] in Blood by Manual count,LOINC,anc
+40768821,66138-9,Band form neutrophils [#/volume] in Blood from Fetus by Manual count,LOINC,anc
+3012533,752-6,Deprecated Neutrophils [#/volume] in Blood by Automated count,LOINC,anc
+3000192,30449-3,Neutrophils.hypersegmented [#/volume] in Blood,LOINC,anc
+3005937,766-6,Neutrophils.hypersegmented [#/volume] in Blood by Manual count,LOINC,anc
+3017732,26499-4,Neutrophils [#/volume] in Blood,LOINC,anc
+3013650,751-8,Neutrophils [#/volume] in Blood by Automated count,LOINC,anc
+3017501,753-4,Neutrophils [#/volume] in Blood by Manual count,LOINC,anc
+40768822,66139-7,Neutrophils [#/volume] in Blood from Fetus by Manual count,LOINC,anc
+36203200,85369-7,Neutrophils [#/volume] in Control Blood by Flow cytometry (FC),LOINC,anc
+44787041,74398-9,Neutrophils [#/volume] in Cord blood,LOINC,anc
+3015586,30451-9,Segmented neutrophils [#/volume] in Blood,LOINC,anc
+3027270,768-2,Segmented neutrophils [#/volume] in Blood by Manual count,LOINC,anc

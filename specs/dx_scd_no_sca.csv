@@ -1,0 +1,19 @@
+concept_id,concept_name,concept_code,vocabulary_id,cluster
+4049095,Double heterozygous sickling disorder,23269001,SNOMED,scd_no_sca
+4216915,Hemoglobin S sickling disorder with crisis,417279003,SNOMED,scd_no_sca
+4166115,Hemoglobin S sickling disorder without crisis,416290001,SNOMED,scd_no_sca
+4131914,Sickle cell anemia with coexistent alpha-thalassemia,127045008,SNOMED,scd_no_sca
+4121115,Sickle cell anemia with high hemoglobin F,234391009,SNOMED,scd_no_sca
+4130067,Sickle cell-beta-thalassemia,127041004,SNOMED,scd_no_sca
+4103763,Sickle cell-hemoglobin D disease,25472008,SNOMED,scd_no_sca
+4167364,Sickle cell-hemoglobin D disease with crisis,417748003,SNOMED,scd_no_sca
+4166099,Sickle cell-hemoglobin D disease without crisis,416214006,SNOMED,scd_no_sca
+4264046,Sickle cell-hemoglobin E disease,47024008,SNOMED,scd_no_sca
+4219568,Sickle cell-hemoglobin E disease with crisis,416484003,SNOMED,scd_no_sca
+4211932,Sickle cell-hemoglobin E disease without crisis,416638004,SNOMED,scd_no_sca
+4131126,Sickle cell-hemoglobin Lepore disease,127047000,SNOMED,scd_no_sca
+4130190,Sickle cell-Hemoglobin O Arab disease,127048005,SNOMED,scd_no_sca
+315523,Sickle cell-thalassemia disease,36472007,SNOMED,scd_no_sca
+443738,Sickle cell-thalassemia disease with crisis,416826005,SNOMED,scd_no_sca
+321263,Sickle cell-thalassemia disease without crisis,417048006,SNOMED,scd_no_sca
+4213628,Sickling disorder due to hemoglobin S,417357006,SNOMED,scd_no_sca
