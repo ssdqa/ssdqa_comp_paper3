@@ -50,43 +50,284 @@ initialize_session <- function(session_name,
                                retain_intermediates = FALSE,
                                db_trace = TRUE){
   
+  assignInNamespace('find_fact_spec_conc_omop',
+                    value = find_fact_spec_conc_omop <- function(cohort,
+                                                                 visit_id,
+                                                                 fact_codes,
+                                                                 fact_tbl,
+                                                                 care_site,
+                                                                 provider,
+                                                                 time=FALSE){
+                      
+                      if(!'cluster'%in%colnames(fact_codes)){fact_codes<-fact_codes%>%mutate(cluster=concept_name)}
+                      if(!'category'%in%colnames(fact_codes)){fact_codes<-fact_codes%>%mutate(category='all')}
+                      
+                      message('Finding code occurrences')
+                      fact_occurrences <-
+                        fact_tbl %>% select(person_id, !!sym(visit_id), concept_id)%>%
+                        inner_join(cohort) %>%
+                        # select(person_id, concept_id,
+                        #        visit_occurrence_id, site) %>%
+                        inner_join(select(fact_codes,
+                                          concept_id, concept_name,
+                                          category, cluster)) 
+                      
+                      message('Finding specialties')
+                      if(time){
+                        if(visit_id == 'visit_occurrence_id'){
+                          visits <- cdm_tbl('visit_occurrence') %>%
+                            inner_join(cohort)%>%
+                            filter(visit_start_date >= start_date,
+                                   visit_start_date <= end_date) %>%
+                            filter(visit_start_date>=time_start,
+                                   visit_start_date<=time_end) %>%
+                            select(visit_occurrence_id, visit_concept_id,
+                                   visit_start_date, provider_id, care_site_id)
+                        }else{
+                          visits <- cdm_tbl('visit_detail') %>%
+                            inner_join(cohort)%>%
+                            filter(visit_detail_start_date >= start_date,
+                                   visit_detail_start_date <= end_date) %>%
+                            filter(visit_detail_start_date>=time_start,
+                                   visit_detail_start_date<=time_end) %>%
+                            select(visit_detail_id, visit_detail_concept_id,
+                                   visit_detail_start_date, provider_id, care_site_id)
+                        }
+                      }else{
+                        if(visit_id == 'visit_occurrence_id'){
+                          visits <- cdm_tbl('visit_occurrence') %>%
+                            inner_join(cohort)%>%
+                            filter(visit_start_date >= start_date,
+                                   visit_start_date <= end_date) %>%
+                            select(visit_occurrence_id, visit_concept_id,
+                                   visit_start_date, provider_id, care_site_id)
+                        }else{
+                          visits <- cdm_tbl('visit_detail') %>%
+                            inner_join(cohort)%>%
+                            filter(visit_detail_start_date >= start_date,
+                                   visit_detail_start_date <= end_date) %>%
+                            select(visit_detail_id, visit_detail_concept_id,
+                                   visit_detail_start_date, provider_id, care_site_id)
+                        }
+                      }
+                      
+                      
+                      if(care_site&provider){
+                        pv_spec <- visits %>%
+                          select(-care_site_id) %>%
+                          inner_join(select(fact_occurrences, !!sym(visit_id)))%>%
+                          left_join(select(cdm_tbl('provider'),c(provider_id, specialty_concept_id)),
+                                    by = 'provider_id')%>%
+                          rename(specialty_concept_id_pv=specialty_concept_id) 
+                        
+                        cs_spec <- visits %>%
+                          select(-provider_id) %>%
+                          inner_join(select(fact_occurrences,!!sym(visit_id)))%>%
+                          left_join(select(cdm_tbl('care_site'),c(care_site_id, specialty_concept_id)),
+                                    by = 'care_site_id')%>%
+                          rename(specialty_concept_id_cs=specialty_concept_id) 
+                        
+                        spec_full <-
+                          visits %>%
+                          left_join(pv_spec) %>%
+                          left_join(cs_spec) %>%
+                          mutate(specialty_concept_id=case_when(!is.na(specialty_concept_id_pv)~specialty_concept_id_pv,
+                                                                !is.na(specialty_concept_id_cs)~specialty_concept_id_cs,
+                                                                TRUE~NA_integer_))%>%
+                          select(-c(specialty_concept_id_pv,specialty_concept_id_cs, provider_id, care_site_id)) %>%
+                          distinct() 
+                        
+                      }else if(provider&!care_site){
+                        spec_full <- visits %>%
+                          select(-care_site_id)%>%
+                          inner_join(select(fact_occurrences, !!sym(visit_id)))%>%
+                          left_join(select(cdm_tbl('provider'),c(provider_id, specialty_concept_id)),
+                                    by = 'provider_id') %>%
+                          distinct() %>% compute_new()
+                      }else if(care_site&!provider){
+                        spec_full <- visits %>%
+                          select(-provider_id)%>%
+                          inner_join(select(fact_occurrences, !!sym(visit_id)))%>%
+                          left_join(select(cdm_tbl('care_site'),c(care_site_id, specialty_concept_id)),
+                                    by = 'care_site_id') %>%
+                          distinct() %>% compute_new()
+                      }
+                      
+                      spec_final <-
+                        inner_join(
+                          spec_full,
+                          fact_occurrences
+                        ) 
+                      
+                      
+                      return(spec_final)
+                      
+                    },
+                    ns = 'clinicalevents.specialties')
+  
+  
+  assignInNamespace(x = 'compute_pf_omop',
+                    value = compute_pf_omop <- function(cohort,
+                                                        pf_input_tbl,
+                                                        grouped_list,
+                                                        domain_tbl) {
+                      
+                      domain_results <- list()
+                      domain_list <- split(domain_tbl, seq(nrow(domain_tbl)))
+                      
+                      
+                      for (i in 1:length(domain_list)) {
+                        
+                        domain_name = domain_list[[i]]$domain
+                        message(paste0('Starting domain ', domain_list[[i]]$domain))
+                        
+                        ## checks to see if the table needs to be filtered in any way;
+                        ## allow for one filtering operation
+                        if(! is.na(domain_list[[i]]$filter_logic)) {
+                          domain_tbl_use <- cdm_tbl(paste0(domain_list[[i]]$domain_tbl)) %>%
+                            filter(!! rlang::parse_expr(domain_list[[i]]$filter_logic))
+                        } else {domain_tbl_use <- cdm_tbl(paste0(domain_list[[i]]$domain_tbl))}
+                        
+                        ## computes facts per patient by a named list of grouped variables
+                        ## assumes person_id is part of named list
+                        pf <-
+                          pf_input_tbl %>%
+                          inner_join(select(domain_tbl_use,
+                                            visit_occurrence_id)) %>%
+                          group_by(
+                            !!! syms(grouped_list)
+                          ) %>% summarise(total_strat_ct=n()) %>%
+                          ungroup() %>%
+                          mutate(domain=domain_name) %>%
+                          mutate(k_mult = case_when(fu < 0.1 ~ 100,
+                                                    fu >= 0.1 & fu < 1 ~ 10,
+                                                    TRUE ~ 1),
+                                 fact_ct_strat=ifelse(fu != 0,round(total_strat_ct/(fu * k_mult),2),0)) %>%
+                          #select(-c(total_strat_ct, k_mult)) %>%
+                          select(person_id,
+                                 domain,
+                                 fact_ct_strat) %>%
+                          pivot_wider(names_from=domain,
+                                      values_from=fact_ct_strat) %>%
+                          right_join(cohort) %>%
+                          relocate(person_id) %>%
+                          collect()
+                        
+                        domain_results[[domain_name]] <- pf
+                      }
+                      
+                      domain_results_left_join <-
+                        reduce(.x=domain_results,
+                               .f=left_join)
+                    },
+                    ns = 'patientfacts')
+  
+  assignInNamespace(x = 'compute_pf_for_fot_omop',
+                    value = compute_pf_for_fot_omop <- function(cohort, pf_input_tbl,
+                                                                grouped_list,
+                                                                domain_tbl) {
+                      
+                      domain_results <- list()
+                      domain_list <- split(domain_tbl, seq(nrow(domain_tbl)))
+                      
+                      
+                      for (i in 1:length(domain_list)) {
+                        
+                        domain_name = domain_list[[i]]$domain
+                        message(paste0('Starting domain ', domain_list[[i]]$domain))
+                        
+                        ## checks to see if the table needs to be filtered in any way;
+                        ## allow for one filtering operation
+                        if(! is.na(domain_list[[i]]$filter_logic)) {
+                          domain_tbl_use <- cdm_tbl(paste0(domain_list[[i]]$domain_tbl)) %>%
+                            filter(!! rlang::parse_expr(domain_list[[i]]$filter_logic))
+                        } else {domain_tbl_use <- cdm_tbl(paste0(domain_list[[i]]$domain_tbl))}
+                        
+                        ## computes facts per patient by a named list of grouped variables
+                        ## assumes person_id is part of named list
+                        pf <-
+                          pf_input_tbl %>%
+                          inner_join(select(domain_tbl_use,
+                                            visit_occurrence_id)) %>%
+                          group_by(
+                            !!! syms(grouped_list)
+                          ) %>% summarise(total_strat_ct=n()) %>%
+                          mutate(domain=domain_name) %>% ungroup()
+                        
+                        new_group <- grouped_list[! grouped_list %in% c('person_id')]
+                        
+                        pf_cohort_final <-
+                          pf %>% right_join(select(cohort,
+                                                   person_id)) %>%
+                          distinct(person_id) %>% summarise(ct=n()) %>% pull()
+                        
+                        site_visit_ct_num <-
+                          pf_input_tbl %>% summarise(ct=n_distinct(person_id)) %>%
+                          pull()
+                        
+                        pf_final <-
+                          pf %>% collect() %>% group_by(
+                            !!! syms(new_group)
+                          ) %>% group_by(domain, .add = TRUE) %>%
+                          summarise(pts_w_fact=n(),
+                                    sum_fact_ct=sum(total_strat_ct),
+                                    median_fact_ct=median(total_strat_ct)) %>%
+                          ungroup()
+                        
+                        
+                        finalized <-
+                          pf_final %>%
+                          mutate(pt_ct_denom=pf_cohort_final,
+                                 pts_w_visit=site_visit_ct_num) %>% collect()
+                        
+                        
+                        domain_results[[domain_name]] <- finalized
+                      }
+                      
+                      
+                      reduce(.x=domain_results,
+                             .f=dplyr::union)
+                    },
+                    ns = 'patientfacts')
+  
+  
   # Establish session
   argos_session <- argos$new(session_name)
   
-  set_argos_default(argos_session)
+  # set_argos_default(argos_session)
   
   # Set db_src
   if(!is_json){
-    get_argos_default()$config('db_src', db_conn)
+    argos_session$config('db_src', db_conn)
   }else{
-    get_argos_default()$config('db_src', srcr(db_conn))
+    argos_session$config('db_src', srcr(db_conn))
   }
   
   # Set misc configs
-  get_argos_default()$config('cdm_schema', cdm_schema)
-  get_argos_default()$config('results_schema', results_schema)
-  get_argos_default()$config('vocabulary_schema', vocabulary_schema)
-  get_argos_default()$config('cache_enabled', cache_enabled)
-  get_argos_default()$config('retain_intermediates', retain_intermediates)
-  get_argos_default()$config('db_trace', db_trace)
-  get_argos_default()$config('can_explain', !is.na(tryCatch(db_explain(config('db_src'), 'select 1 = 1'),
+  argos_session$config('cdm_schema', cdm_schema)
+  argos_session$config('results_schema', results_schema)
+  argos_session$config('vocabulary_schema', vocabulary_schema)
+  argos_session$config('cache_enabled', cache_enabled)
+  argos_session$config('retain_intermediates', retain_intermediates)
+  argos_session$config('db_trace', db_trace)
+  argos_session$config('can_explain', !is.na(tryCatch(db_explain(config('db_src'), 'select 1 = 1'),
                                                             error = function(e) NA)))
-  get_argos_default()$config('results_target', ifelse(default_file_output, 'file', TRUE))
+  argos_session$config('results_target', ifelse(default_file_output, 'file', TRUE))
   
   if(is.null(results_tag)){
-    get_argos_default()$config('results_name_tag', '')
+    argos_session$config('results_name_tag', '')
   }else{
-    get_argos_default()$config('results_name_tag', results_tag)
+    argos_session$config('results_name_tag', results_tag)
   }
   
   # Set working directory
-  get_argos_default()$config('base_dir', base_directory)
+  argos_session$config('base_dir', base_directory)
   
   # Set specs & results directories
   ## Drop path to base directory if present
   specs_drop_wd <- str_remove(specs_subdirectory, base_directory)
   results_drop_wd <- str_remove(results_subdirectory, base_directory)
-  get_argos_default()$config('subdirs', list(spec_dir = specs_drop_wd,
+  argos_session$config('subdirs', list(spec_dir = specs_drop_wd,
                                              result_dir = results_drop_wd))
   
   # Print session information
@@ -94,5 +335,7 @@ initialize_session <- function(session_name,
   cli::cli_div(theme = list(span.code = list(color = 'blue')))
   
   cli::cli_inform(paste0('Connected to: ', db_str$dbname, '@', db_str$host))
-  cli::cli_inform('To see environment settings, run {.code get_argos_default()}')
+  # cli::cli_inform('To see environment settings, run {.code get_argos_default()}')
+  
+  argos_session
 }
