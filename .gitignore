@@ -2,7 +2,9 @@
 .Rhistory
 .Rproj.user*
 *.html
+*.html.gpg
 *results*
 .Rprofile
 .Renviron
 .Rproj.user
+specs/heme_lab_source_values.csv

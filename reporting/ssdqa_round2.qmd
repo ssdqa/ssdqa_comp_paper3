@@ -1,0 +1,433 @@
+---
+title: "SCA SSDQA Round 2"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+# library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(postgres_session)
+
+```
+
+Based on the results of the attrition analysis, we decided to further investigate why some sites were experiencing significant drop offs in patient counts. To facilitate this, we conducted additional analyses using the cohort from Step 3 of the attrition (`Patients with SCA < 18 years old at first diagnosis`), which was the last step before the first major drop off.
+
+We used the Source and Concept Vocabularies check to investigate lab source value mappings, which would have impacted Step 4 of the attrition. We used the Patient Facts check to investigate patient fact density, which would have impacted Step 5 of the attrition. And finally, we used the Clinical Events & Specialties module to investigate specialty utilization, which would have impacted Steps 6 and 7 of the attrition.
+
+The results of these analyses are included below. They were used to inform our decision on how to best construct the cohort without losing data from so many institutions.
+
+## Source and Concept Vocabularies
+
+### Multi Site, Exploratory, Cross-Sectional
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs') %>%
+             collect(),
+           code_type = 'source',
+           vocab_tbl = vocabulary_tbl('concept')) %>% gt::sub_missing()
+
+```
+
+```{r}
+
+# scv_output(process_output = results_tbl('scv_ms_anom_cs') %>%
+#              collect(),
+#            code_type = 'source',
+#            vocab_tbl = vocabulary_tbl('concept'))
+
+```
+
+## Patient Facts
+
+```{r}
+
+read_codeset('input_pf_visits', 'ic') %>% 
+  pivot_wider(names_from = visit_type,
+              values_from = visit_concept_id) %>%
+  mutate(`hematology specialists` = 'any visit_concept_id with a hematology provider or care site specialty') %>%
+  gt::gt() %>%
+  tab_header('Visit Type Definitions') %>%
+  opt_stylize(style = 2)
+
+```
+
+### Multi Site, Exploratory, Cross-Sectional
+
+:::{.panel-tabset}
+
+# Median with 0s
+
+```{r, fig.width=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs') %>% collect(),
+                  output = 'median_site_with0s')
+
+grph
+
+```
+
+# Median without 0s
+
+```{r, fig.width=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs') %>% collect(),
+                  output = 'median_site_without0s')
+
+grph
+
+```
+
+:::
+
+### Multi Site, Anomaly Detection, Longitudinal
+
+Focusing on hematology specialist visits for the time being, can expand to other visit types as needed
+
+:::{.panel-tabset}
+
+# All Drugs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'all drugs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# Prescription Drugs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'prescription drugs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+# Diagnoses
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'diagnoses')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# Procedures
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'procedures')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# All Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'all labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# Hemoglobin Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'hemoglobin labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+# ANC Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'anc labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# MCV Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'mcv labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with Hemoglobin Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+:::
+
+## Clinical Events & Specialties
+
+### Multi Site, Anomaly Detection, Cross-Sectional
+
+:::{.panel-tabset}
+
+# SCA
+
+```{r, fig.height=8}
+
+cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_cs') %>%
+                collect() %>% filter(cluster == 'sca'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect()) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+```
+
+# SCD w/o SCA
+
+```{r, fig.height=8}
+
+cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_cs') %>%
+                collect() %>% filter(cluster == 'scd_no_sca'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect()) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+```
+
+# Hydroxyurea
+
+```{r, fig.height=8}
+
+cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_cs') %>%
+                collect() %>% filter(cluster == 'hydroxyurea'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect()) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+```
+
+# MCV Labs
+```{r, fig.height=8}
+
+cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_cs') %>%
+                collect() %>% filter(cluster == 'mcv'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect()) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+```
+
+# ANC Labs
+```{r, fig.height=8}
+
+cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_cs') %>%
+                collect() %>% filter(cluster == 'anc'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect()) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+
+```
+
+:::
+
+### Multi Site, Anomaly Detection, Longitudinal
+
+:::{.panel-tabset}
+
+# SCA
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_la') %>%
+                collect() %>% filter(cluster == 'sca'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect(),
+              specialty_filter = 'Hematology')
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + plot_annotation(title = 'Hematology Specialty') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+# SCD w/o SCA
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_la') %>%
+                collect() %>% filter(cluster == 'scd_no_sca'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect(),
+              specialty_filter = 'Hematology')
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + plot_annotation(title = 'Hematology Specialty') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+# Hydroxyurea
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_la') %>%
+                collect() %>% filter(cluster == 'hydroxyurea'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect(),
+              specialty_filter = 'Hematology')
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + plot_annotation(title = 'Hematology Specialty') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+# MCV Labs
+```{r, fig.width=9, fig.height=8}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_la') %>%
+                collect() %>% filter(cluster == 'mcv'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect(),
+              specialty_filter = 'Hematology')
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + plot_annotation(title = 'Hematology Specialty') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+# ANC Labs
+```{r, fig.width=9, fig.height=8}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_anom_la') %>%
+                collect() %>% filter(cluster == 'anc'),
+              cnc_sp_process_names = results_tbl('cnc_sp_specialty_names') %>%
+                collect(),
+              specialty_filter = 'Hematology')
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + plot_annotation(title = 'Hematology Specialty') +
+  plot_layout(heights = c(5,5))
+
+combo_plot
+
+```
+
+:::
