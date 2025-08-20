@@ -48,10 +48,10 @@ readr::write_csv(pf_visit_input, 'specs/input_pf_visits.csv')
 
 ##' **Source and Concept Vocabularies**
 
-scv_domain_input <- tibble(domain = 'measurement_labs',
-                           concept_field = 'measurement_concept_id',
-                           source_concept_field = 'measurement_source_value',
-                           date_field = 'measurement_date',
-                           vocabulary_field = NA)
+scv_domain_input <- tibble(domain = c('measurement_labs', 'provider', 'care_site'),
+                           concept_field = c('measurement_concept_id', 'specialty_concept_id','specialty_concept_id'),
+                           source_concept_field = c('measurement_source_value','specialty_source_value','specialty_source_value'),
+                           date_field = c('measurement_date', 'visit_start_date', 'visit_start_date'),
+                           vocabulary_field = c(NA, NA, NA))
 
 readr::write_csv(scv_domain_input, 'specs/input_scv_domain.csv')

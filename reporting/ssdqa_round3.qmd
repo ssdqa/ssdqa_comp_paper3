@@ -1,0 +1,363 @@
+---
+title: "SCA SSDQA Round 3"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+# library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(postgres_session)
+
+```
+
+# Source and Concept Vocabularies
+
+## Multi Site, Exploratory, Cross-Sectional
+
+### Hematology String Search
+
+Searched for the following in the `measurement_source_value` field: `hemoglobin s`, `beta globin`, `hemoglobin identification`, `hemoglobin quant`, or `hemoglobin elect`
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r3_heme') %>%
+             collect(),
+           code_type = 'source',
+           vocab_tbl = vocabulary_tbl('concept')) %>% gt::sub_missing()
+
+```
+
+### Unmapped Labs
+
+Source values associated with unmapped labs
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r3_labs') %>%
+             collect(),
+           code_type = 'cdm',
+           vocab_tbl = vocabulary_tbl('concept')) %>% gt::sub_missing()
+
+```
+
+### Unmapped Specialties
+
+Source values associated with unmapped specialties
+
+#### Provider Specialties
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r3_pv') %>%
+             collect(),
+           code_type = 'cdm',
+           vocab_tbl = vocabulary_tbl('concept')) %>% gt::sub_missing()
+
+```
+
+#### Care Site Specialties
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r3_cs') %>%
+             collect(),
+           code_type = 'cdm',
+           vocab_tbl = vocabulary_tbl('concept')) %>% gt::sub_missing()
+
+```
+
+# Patient Facts
+
+Limiting to just ANC and MCV labs
+
+```{r}
+
+read_codeset('input_pf_visits', 'ic') %>% 
+  pivot_wider(names_from = visit_type,
+              values_from = visit_concept_id) %>%
+  mutate(`hematology specialists` = 'any visit_concept_id with a hematology provider or care site specialty') %>%
+  gt::gt() %>%
+  tab_header('Visit Type Definitions') %>%
+  opt_stylize(style = 2)
+
+```
+
+## Multi Site, Exploratory, Cross-Sectional
+
+:::{.panel-tabset}
+
+# Median with 0s
+
+```{r, fig.width=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs') %>% 
+                    collect() %>% filter(domain %in% c('anc labs',
+                                                       'mcv labs')),
+                  output = 'median_site_with0s')
+
+grph
+
+```
+
+# Median without 0s
+
+```{r, fig.width=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs') %>% 
+                    collect() %>% filter(domain %in% c('anc labs',
+                                                       'mcv labs')),
+                  output = 'median_site_without0s')
+
+grph
+
+```
+
+:::
+
+## Multi Site, Anomaly Detection, Longitudinal
+
+### Inpatient
+
+:::{.panel-tabset}
+
+# ANC Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'inpatient',
+                  domain_filter = 'anc labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Inpatient Visits with ANC Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# MCV Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'inpatient',
+                  domain_filter = 'mcv labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Inpatient Visits with MCV Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+:::
+
+### Outpatient
+
+:::{.panel-tabset}
+
+# ANC Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'outpatient',
+                  domain_filter = 'anc labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Outpatient Visits with ANC Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# MCV Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'outpatient',
+                  domain_filter = 'mcv labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Outpatient Visits with MCV Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+:::
+
+### Outpatient (non-9202)
+
+:::{.panel-tabset}
+
+# ANC Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'outpatient (non-9202)',
+                  domain_filter = 'anc labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Non-9202 Outpatient Visits with ANC Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# MCV Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'outpatient (non-9202)',
+                  domain_filter = 'mcv labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Non-9202 Outpatient Visits with MCV Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+:::
+
+### Emergency Department
+:::{.panel-tabset}
+
+# ANC Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'emergency department',
+                  domain_filter = 'anc labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'ED Visits with ANC Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# MCV Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'emergency department',
+                  domain_filter = 'mcv labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'ED Visits with MCV Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+:::
+
+### Hematology Specialist
+
+:::{.panel-tabset}
+
+# ANC Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'anc labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with ANC Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+# MCV Labs
+
+```{r, fig.width=9, fig.height=8}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la') %>% collect(),
+                  output = 'median_site_without0s',
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'mcv labs')
+
+
+grph1 <- grph[[1]] + ggtitle('')
+grph2 <- grph[[3]] + ggtitle('')
+
+combo_plot <- grph1 + grph2 + 
+  plot_annotation(title = 'Hematology Specialist Visits with MCV Labs') +
+  plot_layout(heights = c(5,5))
+combo_plot
+
+```
+
+:::

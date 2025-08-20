@@ -21,7 +21,7 @@ source(file.path('setup', 'argos_wrapper.R'))
 
 # Establish connection to database
 postgres_session <- initialize_session(session_name = 'ssdqa_postgres',
-                                       db_conn = Sys.getenv('PEDSNET_BASE_CONFIG'),
+                                       db_conn = Sys.getenv('PEDSNET_BASE_57'),
                                        is_json = TRUE,
                                        cdm_schema = 'dcc_pedsnet',
                                        results_schema = 'ssdqa_paper3', 

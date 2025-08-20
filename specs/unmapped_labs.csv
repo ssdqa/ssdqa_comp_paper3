@@ -1,0 +1,5 @@
+concept_id,concept_code,concept_name,vocabulary_id
+0,No matching concept,No matching concept,None
+44814650,Generic-NI,No information,PCORNet
+44814649,Generic-OT,Other,PCORNet
+44814653,Generic-UN,Unknown,PCORNet

@@ -1,0 +1,6 @@
+concept_id,concept_code,concept_name,vocabulary_id
+38004477,37,Pediatric Medicine,Medicare Specialty
+38004514,99,Unknown Physician Specialty,Medicare Specialty
+0,No matching concept,No matching concept,None
+44814650,Generic-NI,No information,PCORNet
+44814649,Generic-OT,Other,PCORNet
