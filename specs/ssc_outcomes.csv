@@ -1,0 +1,79 @@
+concept_id,concept_code,concept_name,vocabulary_id,cluster,variable,domain
+963929,1999307,hydroxyurea 100 MG,RxNorm,hydroxyurea,Hydroxyurea,drugs
+963930,1999308,hydroxyurea 100 MG Oral Tablet,RxNorm,hydroxyurea,Hydroxyurea,drugs
+963932,1999310,hydroxyurea 100 MG [Siklos],RxNorm,hydroxyurea,Hydroxyurea,drugs
+963933,1999311,hydroxyurea Oral Tablet [Siklos],RxNorm,hydroxyurea,Hydroxyurea,drugs
+963934,1999312,Siklos Oral Product,RxNorm,hydroxyurea,Hydroxyurea,drugs
+963935,1999313,Siklos Pill,RxNorm,hydroxyurea,Hydroxyurea,drugs
+963936,1999314,hydroxyurea 100 MG Oral Tablet [Siklos],RxNorm,hydroxyurea,Hydroxyurea,drugs
+963937,1999315,hydroxyurea 1000 MG [Siklos],RxNorm,hydroxyurea,Hydroxyurea,drugs
+963938,1999316,hydroxyurea 1000 MG Oral Tablet [Siklos],RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377141,5552,hydroxyurea,RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377163,197797,hydroxyurea 500 MG Oral Capsule,RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377167,213282,hydroxyurea 200 MG Oral Capsule [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377168,213283,hydroxyurea 300 MG Oral Capsule [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377169,213284,hydroxyurea 400 MG Oral Capsule [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377170,283475,hydroxyurea 1000 MG Oral Tablet,RxNorm,hydroxyurea,Hydroxyurea,drugs
+1377171,284561,hydroxyurea 1000 MG Oral Tablet [Mylocel],RxNorm,hydroxyurea,Hydroxyurea,drugs
+19007385,105602,hydroxyurea 500 MG Oral Capsule [Hydrea],RxNorm,hydroxyurea,Hydroxyurea,drugs
+19021901,564113,hydroxyurea 500 MG [Hydrea],RxNorm,hydroxyurea,Hydroxyurea,drugs
+19023560,200342,hydroxyurea 200 MG Oral Capsule,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19023561,200343,hydroxyurea 300 MG Oral Capsule,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19023562,200344,hydroxyurea 400 MG Oral Capsule,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19063155,573195,hydroxyurea 200 MG [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+19063156,573196,hydroxyurea 300 MG [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+19063157,573197,hydroxyurea 400 MG [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+19081478,316067,hydroxyurea 200 MG,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19081479,316068,hydroxyurea 300 MG,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19081480,316069,hydroxyurea 400 MG,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19081492,316070,hydroxyurea 500 MG,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19087442,331560,hydroxyurea 1000 MG,RxNorm,hydroxyurea,Hydroxyurea,drugs
+19120739,574990,hydroxyurea 1000 MG [Mylocel],RxNorm,hydroxyurea,Hydroxyurea,drugs
+36222777,1166387,Droxia Oral Product,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36222778,1166388,Droxia Pill,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36226190,1160113,hydroxyurea Oral Product,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36226191,1160114,hydroxyurea Pill,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36237854,1174066,Hydrea Oral Product,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36237855,1174067,Hydrea Pill,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36239273,1185671,Mylocel Oral Product,RxNorm,hydroxyurea,Hydroxyurea,drugs
+36239522,1185672,Mylocel Pill,RxNorm,hydroxyurea,Hydroxyurea,drugs
+40051647,370658,hydroxyurea Oral Capsule,RxNorm,hydroxyurea,Hydroxyurea,drugs
+40051648,366459,hydroxyurea Oral Capsule [Droxia],RxNorm,hydroxyurea,Hydroxyurea,drugs
+40051649,366743,hydroxyurea Oral Capsule [Hydrea],RxNorm,hydroxyurea,Hydroxyurea,drugs
+40051650,370657,hydroxyurea Oral Tablet,RxNorm,hydroxyurea,Hydroxyurea,drugs
+40051651,368144,hydroxyurea Oral Tablet [Mylocel],RxNorm,hydroxyurea,Hydroxyurea,drugs
+3018199,26507-4,Band form neutrophils [#/volume] in Blood,LOINC,anc,ANC labs,labs
+3001465,30229-9,Band form neutrophils [#/volume] in Blood by Automated count,LOINC,anc,ANC labs,labs
+3008939,763-3,Band form neutrophils [#/volume] in Blood by Manual count,LOINC,anc,ANC labs,labs
+40768821,66138-9,Band form neutrophils [#/volume] in Blood from Fetus by Manual count,LOINC,anc,ANC labs,labs
+3012533,752-6,Deprecated Neutrophils [#/volume] in Blood by Automated count,LOINC,anc,ANC labs,labs
+3000192,30449-3,Neutrophils.hypersegmented [#/volume] in Blood,LOINC,anc,ANC labs,labs
+3005937,766-6,Neutrophils.hypersegmented [#/volume] in Blood by Manual count,LOINC,anc,ANC labs,labs
+3017732,26499-4,Neutrophils [#/volume] in Blood,LOINC,anc,ANC labs,labs
+3013650,751-8,Neutrophils [#/volume] in Blood by Automated count,LOINC,anc,ANC labs,labs
+3017501,753-4,Neutrophils [#/volume] in Blood by Manual count,LOINC,anc,ANC labs,labs
+40768822,66139-7,Neutrophils [#/volume] in Blood from Fetus by Manual count,LOINC,anc,ANC labs,labs
+36203200,85369-7,Neutrophils [#/volume] in Control Blood by Flow cytometry (FC),LOINC,anc,ANC labs,labs
+44787041,74398-9,Neutrophils [#/volume] in Cord blood,LOINC,anc,ANC labs,labs
+3015586,30451-9,Segmented neutrophils [#/volume] in Blood,LOINC,anc,ANC labs,labs
+3027270,768-2,Segmented neutrophils [#/volume] in Blood by Manual count,LOINC,anc,ANC labs,labs
+3094918,142868001,MCV - NOS,Nebraska Lexicon,mcv,MCV labs,labs
+40301727,142868001,MCV - NOS,SNOMED,mcv,MCV labs,labs
+45912123,851,MEAN CORPUSCULAR VOLUME,CIEL,mcv,MCV labs,labs
+3024731,30428-7,MCV [Entitic volume],LOINC,mcv,MCV labs,labs
+3023599,787-2,MCV [Entitic volume] by Automated count,LOINC,mcv,MCV labs,labs
+36360055,10027003,Mean cell volume high,MedDRA,mcv,MCV labs,labs
+36313260,10027004,Mean cell volume increased,MedDRA,mcv,MCV labs,labs
+36313257,10026999,Mean cell volume,MedDRA,mcv,MCV labs,labs
+36360057,10051859,Mean corpuscular volume increased,MedDRA,mcv,MCV labs,labs
+36360054,10051858,Mean corpuscular volume decreased,MedDRA,mcv,MCV labs,labs
+3449135,104133003,Erythrocyte mean corpuscular volume determination,Nebraska Lexicon,mcv,MCV labs,labs
+45478672,42AZ.00,MCV - NOS,Read,mcv,MCV labs,labs
+4013085,165457009,MCV - NOS,SNOMED,mcv,MCV labs,labs
+3557606,5.75431E+14,MCV - NOS,SNOMED,mcv,MCV labs,labs
+4016239,104133003,Erythrocyte mean corpuscular volume determination,SNOMED,mcv,MCV labs,labs
+35814201,30040,Mean corpuscular volume,UK Biobank,mcv,MCV labs,labs
+3085149,103207006,Erythrocyte mean corpuscular volume,Nebraska Lexicon,mcv,MCV labs,labs
+40267645,103207006,Erythrocyte mean corpuscular volume,SNOMED,mcv,MCV labs,labs
+3110757,165457009,Mean corpuscular volume - NOS,Nebraska Lexicon,mcv,MCV labs,labs
+45527664,L8131,MEAN CORPUSCULAR VOLUME,OXMIS,mcv,MCV labs,labs

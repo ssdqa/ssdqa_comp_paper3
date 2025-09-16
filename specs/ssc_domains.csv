@@ -1,0 +1,8 @@
+domain,domain_tbl,concept_field,date_field,vocabulary_field,filter_logic
+conditions,condition_occurrence,condition_concept_id,condition_start_date,NA,NA
+procedures,procedure_occurrence,procedure_concept_id,procedure_date,NA,NA
+drugs,drug_exposure,drug_concept_id,drug_exposure_start_date,NA,NA
+labs,measurement_labs,measurement_concept_id,measurement_date,NA,NA
+inpatient visits,visit_occurrence,visit_concept_id,visit_start_date,NA,visit_concept_id == 9201
+ed visits,visit_occurrence,visit_concept_id,visit_start_date,NA,"visit_concept_id %in% c(9203, 2000000048)"
+outpatient visits,visit_occurrence,visit_concept_id,visit_start_date,NA,"visit_concept_id %in% c(9202, 581399)"

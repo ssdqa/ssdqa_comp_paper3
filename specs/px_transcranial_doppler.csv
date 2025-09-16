@@ -1,0 +1,10 @@
+"concept_id","concept_code","concept_name","vocabulary_id","cluster"
+4330519,"431648005",Transcranial Doppler ultrasonography,SNOMED,transcranial_doppler
+4257891,"440036001",Transcranial Doppler ultrasonography of intracranial artery using microbubble contrast media for detection of emboli,SNOMED,transcranial_doppler
+4208188,"440044001",Transcranial Doppler ultrasonography of intracranial artery for detection of emboli,SNOMED,transcranial_doppler
+4233449,"440119007",Transcranial Doppler ultrasonography of intracranial artery with study of vasoreactivity,SNOMED,transcranial_doppler
+40491485,"448750002",Transcranial Doppler ultrasound velocimetry,SNOMED,transcranial_doppler
+2313978,"93888",Transcranial Doppler study of the intracranial arteries; limited study,CPT4,transcranial_doppler
+2313977,"93886",Transcranial Doppler study of the intracranial arteries; complete study,CPT4,transcranial_doppler
+2313981,"93893",Transcranial Doppler study of the intracranial arteries; emboli detection with intravenous microbubble injection,CPT4,transcranial_doppler
+2313980,"93892",Transcranial Doppler study of the intracranial arteries; emboli detection without intravenous microbubble injection,CPT4,transcranial_doppler

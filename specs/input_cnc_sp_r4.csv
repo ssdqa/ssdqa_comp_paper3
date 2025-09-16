@@ -1,0 +1,7 @@
+domain,domain_tbl,concept_field,date_field,vocabulary_field,codeset_name
+SCA diagnosis,condition_occurrence,condition_concept_id,condition_start_date,NA,dx_sca
+Non-SCA diagnosis,condition_occurrence,condition_concept_id,condition_start_date,NA,dx_scd_no_sca
+Hydroxyurea prescription,drug_exposure,drug_concept_id,drug_exposure_start_date,NA,rx_hydroxyurea
+MCV labs,measurement_labs,measurement_concept_id,measurement_date,NA,lab_mcv
+ANC labs,measurement_labs,measurement_concept_id,measurement_date,NA,lab_anc
+Transcranial Doppler,procedure_occurrence,procedure_concept_id,procedure_date,NA,px_transcranial_doppler

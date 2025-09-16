@@ -1,6 +1,5 @@
-
-##' **Clinical Events & Specialties**
 ####' `Round 2 DQ`
+##' **Clinical Events & Specialties**
 cnc_sp_input <- tibble(domain = c('SCA diagnosis', 'Non-SCA diagnosis', 'Hydroxyurea prescription',
                                   'MCV labs', 'ANC labs'),
                        domain_tbl = c('condition_occurrence', 'condition_occurrence', 'drug_exposure',
@@ -55,3 +54,49 @@ scv_domain_input <- tibble(domain = c('measurement_labs', 'provider', 'care_site
                            vocabulary_field = c(NA, NA, NA))
 
 readr::write_csv(scv_domain_input, 'specs/input_scv_domain.csv')
+
+
+####' `Round 4 DQ`
+##' **Sensitivity to Selection Criteria**
+ssc_domains <- tibble(domain = c('conditions', 'procedures', 'drugs', 'labs', 'inpatient visits', 'ed visits', 'outpatient visits'),
+                      domain_tbl = c('condition_occurrence', 'procedure_occurrence', 'drug_exposure', 'measurement_labs',
+                                     'visit_occurrence', 'visit_occurrence', 'visit_occurrence'),
+                      concept_field = c('condition_concept_id', 'procedure_concept_id', 'drug_concept_id', 'measurement_concept_id',
+                                        'visit_concept_id', 'visit_concept_id', 'visit_concept_id'),
+                      date_field = c('condition_start_date', 'procedure_date', 'drug_exposure_start_date', 'measurement_date',
+                                     'visit_start_date', 'visit_start_date', 'visit_start_date'),
+                      vocabulary_field = c(NA, NA, NA, NA, NA, NA, NA),
+                      filter_logic = c(NA, NA, NA, NA, "visit_concept_id == 9201", "visit_concept_id %in% c(9203, 2000000048)", "visit_concept_id %in% c(9202, 581399)"))
+
+readr::write_csv(ssc_domains, 'specs/ssc_domains.csv')
+
+ssc_outcomes <- read_codeset('rx_hydroxyurea') %>%
+  mutate(variable = 'Hydroxyurea',
+         domain = 'drugs') %>%
+  union(read_codeset('lab_anc') %>%
+          mutate(variable = 'ANC labs',
+                 domain = 'labs')) %>%
+  union(read_codeset('lab_mcv') %>%
+          select(-c(domain_name, concept_class)) %>%
+          rename('vocabulary_id' = 'vocabulary_name') %>%
+          mutate(variable = 'MCV labs',
+                 domain = 'labs')) #%>%
+  # union(read_codeset('rx_opioids') %>%
+  #         rename('cluster' = 'ingredient') %>%
+  #         mutate(variable = 'Opioids',
+  #                domain = 'drugs'))
+
+readr::write_csv(ssc_outcomes, 'specs/ssc_outcomes.csv')
+
+#' **Clinical Events and Specialties**
+#' Use input from R2 but add transcranial doppler procedures
+
+cnc_sp_input_r4 <- read_codeset('input_cnc_sp', 'ccccc') %>%
+  add_row(domain = 'Transcranial Doppler',
+          domain_tbl = 'procedure_occurrence',
+          concept_field = 'procedure_concept_id',
+          date_field = 'procedure_date', 
+          vocabulary_field = NA_character_,
+          codeset_name = 'px_transcranial_doppler')
+
+readr::write_csv(cnc_sp_input_r4, 'specs/input_cnc_sp_r4.csv')

@@ -42,6 +42,20 @@ trino_session <- initialize_session(session_name = 'ssdqa_trino',
 
 set_argos_default(trino_session)
 
+config('cdm_schema', 'ssdqa_paper3')
+config('table_names', list(
+  'condition_occurrence' = 'cdm_condition_occurrence',
+  'procedure_occurrence' = 'cdm_procedure_occurrence',
+  'visit_occurrence' = 'cdm_visit_occurrence',
+  'provider' = 'cdm_provider_remap',
+  'care_site' = 'cdm_care_site_remap',
+  'measurement_labs' = 'cdm_measurement_labs_remap',
+  'measurement_vitals' = 'cdm_measurement_vitals',
+  'measurement_anthro' = 'cdm_measurement_anthro',
+  'drug_exposure' = 'cdm_drug_exposure',
+  'person' = 'cdm_person'
+))
+
 # Source cohort_* files
 for (fn in list.files('code', 'cohorts|cohort_.+\\.R', full.names = TRUE)){
   source(fn)

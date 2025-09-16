@@ -15,3 +15,4 @@ concept_id,concept_code,concept_name,vocabulary_id,subtyping
 3017974,6864-3,Hemoglobin S [Presence] in Blood by Solubility test,LOINC,not
 21491353,78748-1,Hemoglobin pattern [Interpretation] in Blood by Capillary electrophoresis (CE),LOINC,text
 3020412,801-1,Sickle cells [Presence] in Blood by Light microscopy,LOINC,not
+2000000999,PEDSnet Remap,Remapped SCD Labs,PEDSnet,NA
