@@ -50,6 +50,33 @@ initialize_session <- function(session_name,
                                retain_intermediates = FALSE,
                                db_trace = TRUE){
   
+  argos$public_methods$load_codeset <- function(name, col_types = 'iccc', table_name = name,
+                                                indexes = list('concept_id'), full_path = FALSE,
+                                                db = self$config('db_src'),
+                                                .chunk_size = 5000) {
+    
+    if (self$config('cache_enabled')) {
+      if (is.null(self$config('_codesets'))) self$config('_codesets', list())
+      cache <- self$config('_codesets')
+      if (! is.null(cache[[name]])) return(cache[[name]])
+    }
+    codes <-
+      self$copy_to_new(db,
+                       self$read_codeset(name, col_types = col_types,
+                                         full_path = full_path),
+                       name = table_name,
+                       overwrite = TRUE,
+                       indexes = indexes,
+                       .chunk_size = .chunk_size)
+    
+    if (self$config('cache_enabled')) {
+      cache[[name]] <- codes
+      self$config('_codesets', cache)
+    }
+    
+    codes
+  }
+  
   assignInNamespace('find_fact_spec_conc_omop',
                     value = find_fact_spec_conc_omop <- function(cohort,
                                                                  visit_id,
@@ -289,6 +316,47 @@ initialize_session <- function(session_name,
                              .f=dplyr::union)
                     },
                     ns = 'patientfacts')
+  
+  assignInNamespace('compute_demographic_summary_omop',
+                    compute_demographic_summary_omop <- function (cohort_tbl, site_col, person_tbl = cdm_tbl("person"), 
+                                                                  visit_tbl = cdm_tbl("visit_occurrence"), 
+                                                                  demographic_mappings = sensitivityselectioncriteria::ssc_omop_demographics) 
+                    {
+                      demo_list <- split(demographic_mappings, seq(nrow(demographic_mappings)))
+                      demo_rslt <- list()
+                      for (i in 1:length(demo_list)) {
+                        vals <- demo_list[[i]]$field_values %>% str_replace_all(" ", 
+                                                                                "") %>% str_split(",") %>% unlist()
+                        vals <- as.numeric(vals)
+                        demographic <- person_tbl %>% inner_join(cohort_tbl) %>% 
+                          mutate(demo_col = ifelse(!!sym(demo_list[[i]]$concept_field) %in% 
+                                                     vals, TRUE, FALSE)) %>% select(!!sym(site_col), 
+                                                                                    person_id, start_date, end_date, fu, cohort_id, 
+                                                                                    demo_col) %>% rename(`:=`(!!sym(demo_list[[i]]$demographic), 
+                                                                                                              demo_col)) %>% collect()
+                        demo_rslt[[i]] <- demographic
+                      }
+                      demo_final <- purrr::reduce(.x = demo_rslt, .f = left_join)
+                      new_person <- build_birth_date(cohort = cohort_tbl, person_tbl = person_tbl)
+                      age_ced <- new_person %>% mutate(age_cohort_entry = as.numeric(as.Date(start_date) - 
+                                                                                       birth_date), age_cohort_entry = round(age_cohort_entry/365.25, 
+                                                                                                                             2)) %>% distinct(!!sym(site_col), person_id, age_cohort_entry)
+                      if ("visit_start_date" %in% colnames(visit_tbl)) {
+                        date_col <- "visit_start_date"
+                      }
+                      else {
+                        date_col <- "visit_detail_start_date"
+                      }
+                      age_first_visit <- visit_tbl %>% select(person_id, !!sym(date_col)) %>% 
+                        inner_join(cohort_tbl) %>% group_by(!!sym(site_col), 
+                                                            person_id, cohort_id) %>% summarise(min_visit = min(!!sym(date_col))) %>% 
+                        collect() %>% left_join(new_person) %>% mutate(age_first_visit = as.numeric(as.Date(min_visit) - 
+                                                                                                      birth_date), age_first_visit = round(age_first_visit/365.25, 
+                                                                                                                                           2)) %>% distinct(!!sym(site_col), person_id, age_first_visit)
+                      summ_tbl <- demo_final %>% left_join(age_first_visit) %>% 
+                        left_join(age_ced)
+                    },
+                    ns = 'sensitivityselectioncriteria')
   
   
   # Establish session
