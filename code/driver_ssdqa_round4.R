@@ -46,6 +46,36 @@ postgres_session$output_tbl(ssc_ms_exp_cs_r4$cohort_overlap, 'ssc_ms_exp_cs_over
 ##' need to get this code from kim
 
 #' `Single Site, Exploratory Cross-Sectional`
+cdsts <- list(load_codeset('lab_anc'), 
+              load_codeset('lab_mcv'),
+              load_codeset('lab_scd') %>% filter(subtyping == 'quant') %>% mutate(cluster = 'scd_quant'),
+              load_codeset('lab_scd') %>% filter(subtyping == 'text') %>% mutate(cluster = 'scd_text'),
+              load_codeset('lab_scd') %>% filter(is.na(subtyping)) %>% mutate(cluster = 'scd_remapped'))
+cvd_rslt <- list()
+j <- 1
+
+for(i in cdsts){
+  
+  cvd_ss_exp_cs_r4 <- cvd_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                                  domain_tbl = read_codeset('cvd_input_r4', 'cccc'),
+                                  concept_set = i,
+                                  omop_or_pcornet = 'omop',
+                                  multi_or_single_site = 'single',
+                                  anomaly_or_exploratory = 'exploratory',
+                                  time = FALSE,
+                                  vocab_tbl = vocabulary_tbl('concept'))
+  
+  clust <- i %>% distinct(cluster) %>% pull()
+  
+  cvd_rslt[[j]] <- cvd_ss_exp_cs_r4 %>% mutate(lab_type = clust)
+  
+  j <- j + 1
+}
+
+cvd_ss_exp_cs_r4 <- purrr::reduce(.x = cvd_rslt,
+                                  .f = dplyr::union)
+
+postgres_session$output_tbl(cvd_ss_exp_cs_r4, 'cvd_ss_exp_cs_r4')
 
 ##' **CNC-SP**
 ##' rerun with remapped specialties

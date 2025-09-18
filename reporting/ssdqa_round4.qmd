@@ -20,6 +20,7 @@ library(ggplot2)
 
 setwd(here::here())
 source('setup/setup.R')
+source('code/cohort_cvd.R')
 
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 
@@ -659,6 +660,20 @@ make_interactive_squba(grph[[3]])
 ## Categorical Distributions
 
 ### Single Site (Combined), Exploratory, Cross-Sectional
+```{r}
+
+grph <- cvd_ss_exp_cs(process_output = results_tbl('cvd_ss_exp_cs_r4') %>% collect()) + facet_wrap(~lab_type, scales = 'free_y', ncol = 1)
+
+int_grph <- make_interactive_squba(grph)
+
+int_grph$x$layout$showlegend <- FALSE
+
+# int_grph$width <- 1000
+int_grph$height <- 800
+
+int_grph
+
+```
 
 ## Quantitative Variable Distributions
 

@@ -130,3 +130,11 @@ qvd_input_r4 <- tibble(value_name = c('ANC (per microliter)', 'ANC (thousand per
                                         'unit_concept_id %in% c(0, 44814650)'))
 
 readr::write_csv(qvd_input_r4, 'specs/qvd_input_r4.csv')
+
+#' **Categorical Variable Distributions**
+
+cvd_input_r4 <- tibble(domain = c('measurement_labs'),
+                       concept_field = c('measurement_concept_id'),
+                       vs_field = c('unit_concept_id'),
+                       date_field = c('measurement_date')) 
+readr::write_csv(cvd_input_r4, 'specs/cvd_input_r4.csv')
