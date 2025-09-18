@@ -209,7 +209,7 @@ t1_input <- demos %>%
          'Ethnicity' = 'ethnicity_concept_name',
          'Gender' = 'gender_concept_name')
 
-postgres_session$output_tbl(t1_input, 'table1_input')
+postgres_session$output_tbl(t1_input, 'table1_input_r4')
 
 
 #' ** SQUBA Cohort Attrition **

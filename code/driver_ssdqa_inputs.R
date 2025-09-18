@@ -100,3 +100,33 @@ cnc_sp_input_r4 <- read_codeset('input_cnc_sp', 'ccccc') %>%
           codeset_name = 'px_transcranial_doppler')
 
 readr::write_csv(cnc_sp_input_r4, 'specs/input_cnc_sp_r4.csv')
+
+#' **Quantitative Variable Distribution**
+
+qvd_input_r4 <- tibble(value_name = c('ANC (per microliter)', 'ANC (thousand per microliter)',
+                                      'ANC (no unit)', 'ANC (percent)', 'ANC (microliter)',
+                                      'ANC (cells per microliter)', 'ANC (thousand per cubic millimeter)',
+                                      'ANC (per cubic millimeter)', 'ANC (billion per liter)', 'MCV (femtoliter)',
+                                      'MCV (no unit)', 'SCD Quant (percent)', 'SCD Quant (no unit)'),
+                       domain_tbl = c('measurement_labs','measurement_labs','measurement_labs','measurement_labs','measurement_labs',
+                                      'measurement_labs','measurement_labs','measurement_labs','measurement_labs','measurement_labs',
+                                      'measurement_labs','measurement_labs','measurement_labs'),
+                       value_field = c('value_as_number','value_as_number','value_as_number','value_as_number',
+                                       'value_as_number','value_as_number','value_as_number','value_as_number',
+                                       'value_as_number','value_as_number','value_as_number','value_as_number','value_as_number'),
+                       date_field = c('measurement_date','measurement_date','measurement_date','measurement_date','measurement_date',
+                                      'measurement_date','measurement_date','measurement_date','measurement_date','measurement_date',
+                                      'measurement_date','measurement_date','measurement_date'),
+                       concept_field = c('measurement_concept_id','measurement_concept_id','measurement_concept_id','measurement_concept_id',
+                                         'measurement_concept_id','measurement_concept_id','measurement_concept_id','measurement_concept_id',
+                                         'measurement_concept_id','measurement_concept_id','measurement_concept_id', 'measurement_concept_id',
+                                         'measurement_concept_id'),
+                       codeset_name = c('lab_anc','lab_anc','lab_anc','lab_anc','lab_anc','lab_anc','lab_anc','lab_anc',
+                                        'lab_anc', 'lab_mcv', 'lab_mcv', 'lab_scd', 'lab_scd'),
+                       filter_logic = c('unit_concept_id == 8647', 'unit_concept_id == 8848', 'unit_concept_id %in% c(0, 44814650)',
+                                        'unit_concept_id == 8554', 'unit_concept_id == 9665', 'unit_concept_id == 8784',
+                                        'unit_concept_id == 8961', 'unit_concept_id == 8785', 'unit_concept_id == 9444',
+                                        'unit_concept_id == 8583', 'unit_concept_id %in% c(0, 44814650)', 'unit_concept_id == 8554',
+                                        'unit_concept_id %in% c(0, 44814650)'))
+
+readr::write_csv(qvd_input_r4, 'specs/qvd_input_r4.csv')

@@ -1,0 +1,734 @@
+---
+title: "SCA SSDQA Round 4"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(postgres_session)
+
+```
+
+## Cohort Attrition
+
+Based on the results of previous DQ, we re-ran the attrition after remapping some of the unmapped specialties and labs. The lab result remapping was not very successful, as most of the previously unmapped labs did not have valid results that could be used to confirm a diagnosis. The specialty remapping, however, recovered all previously lost patients for one site.
+
+The attrition steps are as follows:
+```{r}
+
+tb <- ca_output(process_output = results_tbl('ca_ms_exp_cs_r4') %>% collect(),
+                large_n = FALSE)
+
+tb[[2]]
+
+```
+
+### Multi Site, Exploratory, Cross-Sectional
+
+:::{.panel-tabset}
+
+# Number of Patients
+```{r}
+
+grph <- ca_output(process_output = results_tbl('ca_ms_exp_cs_r4') %>% collect(),
+                  var_col = 'num_pts')
+
+make_interactive_squba(grph[[1]])
+
+```
+
+# Retention
+```{r}
+
+grph <- ca_output(process_output = results_tbl('ca_ms_exp_cs_r4') %>% collect(),
+                  var_col = 'prop_retained_start')
+
+make_interactive_squba(grph[[1]])
+
+```
+:::
+
+### Multi Site, Anomaly Detection, Cross-Sectional
+:::{.panel-tabset}
+
+# Number of Patients
+```{r}
+
+grph <- ca_output(process_output = results_tbl('ca_ms_anom_cs_num_r4') %>% collect(),
+                  var_col = 'num_pts')
+
+make_interactive_squba(grph)
+
+```
+
+# Retention
+```{r}
+
+grph <- ca_output(process_output = results_tbl('ca_ms_anom_cs_prs_r4') %>% collect(),
+                  var_col = 'prop_retained_start')
+
+make_interactive_squba(grph)
+
+```
+:::
+
+## Table 1
+```{r}
+results_tbl('table1_input_r4') %>%
+  collect() %>%
+  tbl_summary(by = site, include = -c(person_id, birth_date)) %>%
+  add_overall(last = TRUE) %>%
+  bold_labels() %>%
+  italicize_levels()
+```
+
+## Sensitivity to Selection Criteria
+
+Comparison cohort: after step 3 of the original attrition, we instead applied the next steps of requiring at least 6 visits with a hematologist and having at least 2 total years of follow up
+
+```{r}
+
+grph <- ssc_output(process_output = results_tbl('ssc_ms_exp_cs_r4') %>% collect(),
+                   alt_cohort_filter = '6 Heme Visits + 2 Yrs FU')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[2]])
+
+```
+
+## Clinical Events & Specialties
+
+Because this module favors provider specialty where it is available, we evaluated provider & care site specialties separately to get a better sense of where gains were made after remapping. Additionally, remapped hematology specialists are considered a separate category from hematology specialists that were already identified to help appreciate gains from the remapping process.
+
+### Multi Site, Exploratory, Cross-Sectional
+:::{.panel-tabset}
+# Provider
+```{r}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_exp_cs_r4_pv') %>% collect() %>%
+                        filter(cluster %in% c('anc', 'mcv', 'hydroxyurea')),
+                      cnc_sp_process_names = read_codeset('cnc_sp_specialty_names_r4'),
+                      facet_vars = 'cluster')
+
+# grph$facet$params$free$y <- TRUE
+
+make_interactive_squba(grph)
+
+```
+
+```{r}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_exp_cs_r4_pv') %>% collect() %>%
+                        filter(!cluster %in% c('anc', 'mcv', 'hydroxyurea')),
+                      cnc_sp_process_names = read_codeset('cnc_sp_specialty_names_r4'),
+                      facet_vars = 'cluster')
+
+# grph$facet$params$free$y <- TRUE
+
+make_interactive_squba(grph)
+
+```
+
+# Care Site
+```{r}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_exp_cs_r4_cs') %>% collect() %>%
+                        filter(cluster %in% c('anc', 'mcv', 'hydroxyurea')),
+                      cnc_sp_process_names = read_codeset('cnc_sp_specialty_names_r4'),
+                      facet_vars = 'cluster')
+
+# grph$facet$params$free$y <- TRUE
+
+make_interactive_squba(grph)
+
+```
+
+```{r}
+
+grph <- cnc_sp_output(cnc_sp_process_output = results_tbl('cnc_sp_ms_exp_cs_r4_cs') %>% collect() %>%
+                        filter(!cluster %in% c('anc', 'mcv', 'hydroxyurea')),
+                      cnc_sp_process_names = read_codeset('cnc_sp_specialty_names_r4'),
+                      facet_vars = 'cluster')
+
+# grph$facet$params$free$y <- TRUE
+
+make_interactive_squba(grph)
+
+```
+
+:::
+
+## Patient Facts
+
+The hematologist visit category in this check reflects the newly remapped specialties.
+
+The visit type definitions are:
+```{r}
+
+read_codeset('input_pf_visits', 'ic') %>% 
+  pivot_wider(names_from = visit_type,
+              values_from = visit_concept_id) %>%
+  select(-c(outpatient, `outpatient (non-9202)`)) %>% 
+  mutate(`hematology specialists` = 'any visit_concept_id with a hematology provider or care site specialty') %>%
+  mutate(all = 'any visit_concept_id') %>%
+  gt::gt() %>%
+  tab_header('Visit Type Definitions') %>%
+  opt_stylize(style = 2)
+
+```
+
+### Multi Site, Exploratory, Cross-Sectional
+
+:::{.panel-tabset}
+
+# Median with 0s
+## All Domains
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs_r4') %>% collect(),
+          output = 'median_site_with0s')
+
+make_interactive_squba(grph)
+
+```
+## Only Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs_r4') %>% collect() %>%
+            filter(domain %in% c('anc labs', 'mcv labs', 'hemoglobin labs')),
+          output = 'median_site_with0s')
+
+make_interactive_squba(grph)
+
+```
+
+# Median without 0s
+## All Domains
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs_r4') %>% collect(),
+          output = 'median_site_without0s')
+
+make_interactive_squba(grph)
+
+```
+## Only Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_exp_cs_r4') %>% collect() %>%
+            filter(domain %in% c('anc labs', 'mcv labs', 'hemoglobin labs')),
+          output = 'median_site_without0s')
+
+make_interactive_squba(grph)
+
+```
+:::
+
+### Multi Site, Anomaly Detection, Cross-Sectional
+
+:::{.panel-tabset}
+# All Visits
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_cs_r4') %>% collect(),
+          visit_filter = 'all')
+
+make_interactive_squba(grph)
+
+```
+# Inpatient Visits
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_cs_r4') %>% collect(),
+          visit_filter = 'inpatient')
+
+make_interactive_squba(grph)
+
+```
+# ED Visits
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_cs_r4') %>% collect(),
+          visit_filter = 'emergency department')
+
+make_interactive_squba(grph)
+
+```
+# Hematology Visits
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_cs_r4') %>% collect(),
+          visit_filter = 'hematology specialists')
+
+make_interactive_squba(grph)
+
+```
+:::
+
+### Multi Site, Anomaly Detection, Longitudinal
+
+:::{.panel-tabset}
+# All Visits
+
+:::{.panel-tabset}
+# Procedures
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'procedures')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'all drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Prescription Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'prescription drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Diagnoses
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'diagnoses')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Labs (All)
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'all labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# ANC Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'anc labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# MCV Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'mcv labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Hemoglobin Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'all',
+                  domain_filter = 'hemoglobin labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+:::
+
+# Inpatient Visits
+:::{.panel-tabset}
+# Procedures
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'procedures')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'all drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Prescription Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'prescription drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Diagnoses
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'diagnoses')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Labs (All)
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'all labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# ANC Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'anc labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# MCV Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'mcv labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Hemoglobin Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'inpatient',
+                  domain_filter = 'hemoglobin labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+:::
+
+# ED Visits
+:::{.panel-tabset}
+# Procedures
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'procedures')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'all drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Prescription Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'prescription drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Diagnoses
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'diagnoses')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Labs (All)
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'all labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# ANC Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'anc labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# MCV Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'mcv labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Hemoglobin Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'emergency department',
+                  domain_filter = 'hemoglobin labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+:::
+
+# Hematology Visits
+:::{.panel-tabset}
+# Procedures
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'procedures')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'all drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Prescription Drugs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'prescription drugs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Diagnoses
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'diagnoses')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Labs (All)
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'all labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# ANC Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'anc labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# MCV Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'mcv labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+# Hemoglobin Labs
+```{r}
+
+grph <- pf_output(process_output = results_tbl('pf_ms_anom_la_r4') %>% collect(),
+                  visit_filter = 'hematology specialists',
+                  domain_filter = 'hemoglobin labs')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[3]])
+```
+
+:::
+:::
+
+## Categorical Distributions
+
+### Single Site (Combined), Exploratory, Cross-Sectional
+
+## Quantitative Variable Distributions
+
+### Multi Site, Exploratory, Cross-Sectional
+:::{.panel-tabset}
+# ANC Labs
+```{r, fig.height=10}
+
+qvd_output(process_output = results_tbl('qvd_ms_exp_cs_r4') %>% collect() %>%
+             filter(grepl('ANC', value_type)),
+           display_outliers = TRUE)
+
+```
+
+# MCV Labs
+```{r}
+
+qvd_output(process_output = results_tbl('qvd_ms_exp_cs_r4') %>% collect() %>%
+             filter(grepl('MCV', value_type)),
+           display_outliers = TRUE)
+
+```
+
+# SCD Quantitative Labs
+```{r}
+
+qvd_output(process_output = results_tbl('qvd_ms_exp_cs_r4') %>% collect() %>%
+             filter(grepl('SCD', value_type)),
+           display_outliers = TRUE)
+
+```
+:::
+
+### Multi Site, Exploratory, Longitudinal
+:::{.panel-tabset}
+# ANC Labs
+
+Not interactive because its harder to read on the plotly
+```{r, fig.height=10}
+
+grph <- qvd_output(process_output = results_tbl('qvd_ms_exp_la_r4') %>% collect() %>%
+             filter(grepl('ANC', value_type)),
+           display_outliers = TRUE,
+           summary_stat = 'median') + ggtitle('Median ANC Result Value Across Time')
+
+grph
+
+```
+
+# MCV Labs
+```{r}
+
+grph <- qvd_output(process_output = results_tbl('qvd_ms_exp_la_r4') %>% collect() %>%
+             filter(grepl('MCV', value_type)),
+           display_outliers = TRUE,
+           summary_stat = 'median') + ggtitle('Median MCV Result Value Across Time')
+
+make_interactive_squba(grph)
+
+```
+
+# SCD Quantitative Labs
+```{r}
+
+grph <- qvd_output(process_output = results_tbl('qvd_ms_exp_la_r4') %>% collect() %>%
+             filter(grepl('SCD', value_type)),
+           display_outliers = TRUE,
+           summary_stat = 'median') + ggtitle('Median SCD Quantitative Result Value Across Time')
+
+make_interactive_squba(grph)
+
+```
+:::

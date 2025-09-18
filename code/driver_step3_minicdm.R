@@ -79,7 +79,8 @@ labs_remap <- cdm_tbl('measurement_labs') %>%
                                             str_like(eval_name, '%electrophoresis%') & 
                                               og_measurement_concept_id %in% unmapped_labs ~ 2000000999L,
                                             TRUE ~ og_measurement_concept_id)) %>%
-  select(-eval_name)
+  select(-eval_name) %>%
+  mutate(value_as_number = as.numeric(value_as_number))
 output_tbl(labs_remap, 'cdm_measurement_labs_remap')
 
 

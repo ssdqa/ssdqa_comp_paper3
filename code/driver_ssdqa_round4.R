@@ -102,14 +102,124 @@ read_codeset('cnc_sp_specialty_names_r4') %>%
 ##' use unit as site, loop through institutions? or just do combined?
 
 #' `Multi Site, Exploratory, Cross-Sectional`
+qvd_ms_exp_cs_r4 <- qvd_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                                omop_or_pcornet = 'omop',
+                                multi_or_single_site = 'multi',
+                                anomaly_or_exploratory = 'exploratory',
+                                qvd_value_file = read_codeset('qvd_input_r4', 'cccc'))
+
+postgres_session$output_tbl(qvd_ms_exp_cs_r4, 'qvd_ms_exp_cs_r4')
+
+
 #' `Multi Site, Exploratory, Longitudinal`
+qvd_ms_exp_la_r4 <- qvd_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                                omop_or_pcornet = 'omop',
+                                multi_or_single_site = 'multi',
+                                anomaly_or_exploratory = 'exploratory',
+                                time = TRUE,
+                                time_period = 'year',
+                                time_span = c('2011-01-01', '2025-01-01'),
+                                qvd_value_file = read_codeset('qvd_input_r4', 'cccc'))
+
+postgres_session$output_tbl(qvd_ms_exp_la_r4, 'qvd_ms_exp_la_r4')
 
 
 ##' **PF**
 ##' Run for ALL visits, heme visits, ED/IP visits
 ##' rebuild heme visits table with remapped specialties
 ##' same input otherwise from round2
+heme_specialists <- find_specialty(visits = cdm_tbl('visit_occurrence'),
+                                   specialty_conceptset = load_codeset("hematology_specialty")) %>%
+  select(site, person_id, visit_occurrence_id, visit_concept_id, 
+         visit_start_date, visit_end_date, provider_id, care_site_id)
+
+output_tbl(heme_specialists, 'hematology_spec_visits_remap')
 
 #' `Multi Site, Exploratory, Cross-Sectional`
+pf_ms_exp_cs1_r4 <- pf_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                            study_name = 'ssdqa_paper3',
+                            omop_or_pcornet = 'omop',
+                            multi_or_single_site = 'multi',
+                            anomaly_or_exploratory = 'exploratory',
+                            time = FALSE,
+                            visit_types = c('inpatient', 'emergency department',
+                                            'all'),
+                            domain_tbl = read_codeset("input_pf_domains", 'ccc'),
+                            visit_tbl = cdm_tbl('visit_occurrence'),
+                            visit_type_table = read_codeset('input_pf_visits', 'ic') %>%
+                              mutate(visit_type = ifelse(visit_type == 'hematology specialists', 'all', visit_type)))
+
+pf_ms_exp_cs2_r4 <- pf_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                            study_name = 'ssdqa_paper3',
+                            omop_or_pcornet = 'omop',
+                            multi_or_single_site = 'multi',
+                            anomaly_or_exploratory = 'exploratory',
+                            time = FALSE,
+                            visit_types = c('hematology specialists'),
+                            domain_tbl = read_codeset("input_pf_domains", 'ccc'),
+                            visit_tbl = results_tbl('hematology_spec_visits_remap'),
+                            visit_type_table = read_codeset('input_pf_visits', 'ic'))
+
+pf_ms_exp_cs_final_r4 <- pf_ms_exp_cs1_r4 %>% union(pf_ms_exp_cs2_r4)
+postgres_session$output_tbl(pf_ms_exp_cs_final_r4, 'pf_ms_exp_cs_r4')
+
 #' `Multi Site, Anomaly Detection, Cross-Sectional`
+pf_ms_anom_cs1_r4 <- pf_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                               study_name = 'ssdqa_paper3',
+                               omop_or_pcornet = 'omop',
+                               multi_or_single_site = 'multi',
+                               anomaly_or_exploratory = 'anomaly',
+                               time = FALSE,
+                               visit_types = c('inpatient', 'emergency department',
+                                               'all'),
+                               domain_tbl = read_codeset("input_pf_domains", 'ccc'),
+                               visit_tbl = cdm_tbl('visit_occurrence'),
+                               visit_type_table = read_codeset('input_pf_visits', 'ic') %>%
+                                 mutate(visit_type = ifelse(visit_type == 'hematology specialists', 'all', visit_type)))
+
+pf_ms_anom_cs2_r4 <- pf_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                               study_name = 'ssdqa_paper3',
+                               omop_or_pcornet = 'omop',
+                               multi_or_single_site = 'multi',
+                               anomaly_or_exploratory = 'anomaly',
+                               time = FALSE,
+                               visit_types = c('hematology specialists'),
+                               domain_tbl = read_codeset("input_pf_domains", 'ccc'),
+                               visit_tbl = results_tbl('hematology_spec_visits_remap'),
+                               visit_type_table = read_codeset('input_pf_visits', 'ic'))
+
+pf_ms_anom_cs_final_r4 <- pf_ms_anom_cs1_r4 %>% union(pf_ms_anom_cs2_r4)
+postgres_session$output_tbl(pf_ms_anom_cs_final_r4, 'pf_ms_anom_cs_r4')
+
 #' `Multi Site, Anomaly Detection, Longitudinal`
+pf_ms_anom_la1_r4 <- pf_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                                study_name = 'ssdqa_paper3',
+                                omop_or_pcornet = 'omop',
+                                multi_or_single_site = 'multi',
+                                anomaly_or_exploratory = 'anomaly',
+                                time = TRUE,
+                                time_span = c('2011-01-01', '2025-01-01'),
+                                time_period = 'year',
+                                visit_types = c('inpatient', 'emergency department',
+                                                'all'),
+                                domain_tbl = read_codeset("input_pf_domains", 'ccc'),
+                                visit_tbl = cdm_tbl('visit_occurrence'),
+                                visit_type_table = read_codeset('input_pf_visits', 'ic') %>%
+                                  mutate(visit_type = ifelse(visit_type == 'hematology specialists', 'all', visit_type)))
+
+pf_ms_anom_la2_r4 <- pf_process(cohort = results_tbl('sca_attrition_cohort_r4'),
+                                study_name = 'ssdqa_paper3',
+                                omop_or_pcornet = 'omop',
+                                multi_or_single_site = 'multi',
+                                anomaly_or_exploratory = 'anomaly',
+                                time = TRUE,
+                                time_span = c('2011-01-01', '2025-01-01'),
+                                time_period = 'year',
+                                visit_types = c('hematology specialists'),
+                                domain_tbl = read_codeset("input_pf_domains", 'ccc'),
+                                visit_tbl = results_tbl('hematology_spec_visits_remap'),
+                                visit_type_table = read_codeset('input_pf_visits', 'ic'))
+
+pf_ms_anom_la_final_r4 <- pf_ms_anom_la1_r4 %>% union(pf_ms_anom_la2_r4)
+postgres_session$output_tbl(pf_ms_anom_la_final_r4, 'pf_ms_anom_la_r4')
+

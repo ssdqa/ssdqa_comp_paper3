@@ -240,6 +240,11 @@ initialize_session <- function(session_name,
                           relocate(person_id) %>%
                           collect()
                         
+                        if(!any(colnames(pf) %in% domain_name)){
+                          pf <- pf %>%
+                            mutate(!!sym(domain_name) := NA_integer_)
+                        }
+                        
                         domain_results[[domain_name]] <- pf
                       }
                       
