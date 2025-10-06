@@ -129,7 +129,7 @@ qvd_input_r4 <- tibble(value_name = c('ANC (per microliter)', 'ANC (thousand per
                                         'unit_concept_id == 8583', 'unit_concept_id %in% c(0, 44814650)', 'unit_concept_id == 8554',
                                         'unit_concept_id %in% c(0, 44814650)'))
 
-readr::write_csv(qvd_input_r4, 'specs/qvd_input_r4.csv')
+readr::write_csv(qvd_input_r4, 'specs/input_qvd_r4.csv')
 
 #' **Categorical Variable Distributions**
 
@@ -137,4 +137,30 @@ cvd_input_r4 <- tibble(domain = c('measurement_labs'),
                        concept_field = c('measurement_concept_id'),
                        vs_field = c('unit_concept_id'),
                        date_field = c('measurement_date')) 
-readr::write_csv(cvd_input_r4, 'specs/cvd_input_r4.csv')
+readr::write_csv(cvd_input_r4, 'specs/input_cvd_r4.csv')
+
+
+####' `Round 5 DQ`
+
+#' **Patient Facts**
+hydrx_codes <- read_codeset('rx_hydroxyurea') %>% pull(concept_id) %>% paste(collapse = ', ')
+
+pf_input_r5 <- read_codeset('input_pf_domains', 'ccccc') %>%
+  add_row(domain = 'hydroxyurea',
+          domain_tbl = 'drug_exposure',
+          filter_logic = paste0('drug_concept_id %in% c(', hydrx_codes, ')'))
+
+readr::write_csv(pf_input_r5, 'specs/input_pf_domains_r5.csv')
+
+
+#' **Expected Variables Present**
+
+evp_input_r5 <- tibble(variable = c('Hemoglobin Labs', 'ANC Labs', 'MCV Labs', 'Hydroxyurea'),
+                       domain_tbl = c('measurement_labs', 'measurement_labs', 'measurement_labs', 'drug_exposure'),
+                       concept_field = c('measurement_concept_id', 'measurement_concept_id', 'measurement_concept_id',
+                                         'drug_concept_id'),
+                       date_field = c('measurement_date', 'measurement_date', 'measurement_date', 'drug_exposure_start_date'),
+                       codeset_name = c('lab_serum_hemoglobin', 'lab_anc', 'lab_mcv', 'rx_hydroxyurea'),
+                       filter_logic = c(NA, NA, NA, NA))
+
+readr::write_csv(evp_input_r5, 'specs/input_evp_r5.csv')

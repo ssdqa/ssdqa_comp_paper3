@@ -1,0 +1,5 @@
+variable,domain_tbl,concept_field,date_field,codeset_name,filter_logic
+Hemoglobin Labs,measurement_labs,measurement_concept_id,measurement_date,lab_serum_hemoglobin,NA
+ANC Labs,measurement_labs,measurement_concept_id,measurement_date,lab_anc,NA
+MCV Labs,measurement_labs,measurement_concept_id,measurement_date,lab_mcv,NA
+Hydroxyurea,drug_exposure,drug_concept_id,drug_exposure_start_date,rx_hydroxyurea,NA

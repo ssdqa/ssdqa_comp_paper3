@@ -57,7 +57,7 @@ j <- 1
 for(i in cdsts){
   
   cvd_ss_exp_cs_r4 <- cvd_process(cohort = results_tbl('sca_attrition_cohort_r4'),
-                                  domain_tbl = read_codeset('cvd_input_r4', 'cccc'),
+                                  domain_tbl = read_codeset('input_cvd_r4', 'cccc'),
                                   concept_set = i,
                                   omop_or_pcornet = 'omop',
                                   multi_or_single_site = 'single',
@@ -136,7 +136,7 @@ qvd_ms_exp_cs_r4 <- qvd_process(cohort = results_tbl('sca_attrition_cohort_r4'),
                                 omop_or_pcornet = 'omop',
                                 multi_or_single_site = 'multi',
                                 anomaly_or_exploratory = 'exploratory',
-                                qvd_value_file = read_codeset('qvd_input_r4', 'cccc'))
+                                qvd_value_file = read_codeset('input_qvd_r4', 'cccc'))
 
 postgres_session$output_tbl(qvd_ms_exp_cs_r4, 'qvd_ms_exp_cs_r4')
 
@@ -149,7 +149,7 @@ qvd_ms_exp_la_r4 <- qvd_process(cohort = results_tbl('sca_attrition_cohort_r4'),
                                 time = TRUE,
                                 time_period = 'year',
                                 time_span = c('2011-01-01', '2025-01-01'),
-                                qvd_value_file = read_codeset('qvd_input_r4', 'cccc'))
+                                qvd_value_file = read_codeset('input_qvd_r4', 'cccc'))
 
 postgres_session$output_tbl(qvd_ms_exp_la_r4, 'qvd_ms_exp_la_r4')
 

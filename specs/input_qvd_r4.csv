@@ -1,0 +1,14 @@
+value_name,domain_tbl,value_field,date_field,concept_field,codeset_name,filter_logic
+ANC (per microliter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 8647
+ANC (thousand per microliter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 8848
+ANC (no unit),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,"unit_concept_id %in% c(0, 44814650)"
+ANC (percent),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 8554
+ANC (microliter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 9665
+ANC (cells per microliter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 8784
+ANC (thousand per cubic millimeter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 8961
+ANC (per cubic millimeter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 8785
+ANC (billion per liter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_anc,unit_concept_id == 9444
+MCV (femtoliter),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_mcv,unit_concept_id == 8583
+MCV (no unit),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_mcv,"unit_concept_id %in% c(0, 44814650)"
+SCD Quant (percent),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_scd,unit_concept_id == 8554
+SCD Quant (no unit),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_scd,"unit_concept_id %in% c(0, 44814650)"
