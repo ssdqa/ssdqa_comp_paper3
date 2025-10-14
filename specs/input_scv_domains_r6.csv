@@ -1,0 +1,5 @@
+domain,concept_field,source_concept_field,date_field,vocabulary_field
+measurement_labs,measurement_concept_id,measurement_source_value,measurement_date,NA
+provider,specialty_concept_id,specialty_source_value,visit_start_date,NA
+care_site,specialty_concept_id,specialty_source_value,visit_start_date,NA
+drug_exposure,drug_concept_id,drug_source_value,drug_exposure_start_date,NA

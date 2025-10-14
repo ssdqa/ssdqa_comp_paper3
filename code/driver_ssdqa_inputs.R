@@ -164,3 +164,15 @@ evp_input_r5 <- tibble(variable = c('Hemoglobin Labs', 'ANC Labs', 'MCV Labs', '
                        filter_logic = c(NA, NA, NA, NA))
 
 readr::write_csv(evp_input_r5, 'specs/input_evp_r5.csv')
+
+####' `Round 6 DQ`
+
+#' **Source and Concept Vocabularies**
+scv_input_r6 <- read_codeset('input_scv_domain', 'ccccc') %>%
+  add_row(domain = 'drug_exposure',
+          concept_field = 'drug_concept_id',
+          source_concept_field = 'drug_source_value',
+          date_field = 'drug_exposure_start_date',
+          vocabulary_field = NA)
+
+readr::write_csv(scv_input_r6, 'specs/input_scv_domains_r6.csv')
