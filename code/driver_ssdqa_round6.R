@@ -141,4 +141,4 @@ hdrx_cs_flag <- scv_ms_exp_cs_hdrx %>%
               select(concept_id) %>% mutate(in_concept_set = TRUE))
 
 
-postgres_session$output_tbl(mcv_cs_flag, 'scv_ms_exp_cs_r6_mcv')
+postgres_session$output_tbl(hdrx_cs_flag, 'scv_ms_exp_cs_r6_hdrx')
