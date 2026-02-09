@@ -14,3 +14,5 @@ concept_id,concept_code,concept_name,vocabulary_id,cluster
 44787041,74398-9,Neutrophils [#/volume] in Cord blood,LOINC,anc
 3015586,30451-9,Segmented neutrophils [#/volume] in Blood,LOINC,anc
 3027270,768-2,Segmented neutrophils [#/volume] in Blood by Manual count,LOINC,anc
+4148615,30630007,Neutrophil count,SNOMED,anc
+
