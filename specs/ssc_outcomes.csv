@@ -42,6 +42,7 @@ concept_id,concept_code,concept_name,vocabulary_id,cluster,variable,domain
 40051649,366743,hydroxyurea Oral Capsule [Hydrea],RxNorm,hydroxyurea,Hydroxyurea,drugs
 40051650,370657,hydroxyurea Oral Tablet,RxNorm,hydroxyurea,Hydroxyurea,drugs
 40051651,368144,hydroxyurea Oral Tablet [Mylocel],RxNorm,hydroxyurea,Hydroxyurea,drugs
+2000000998,PEDSnet Remap,Remapped Hydroxyurea,PEDSnet,NA,Hydroxyurea,drugs
 3018199,26507-4,Band form neutrophils [#/volume] in Blood,LOINC,anc,ANC labs,labs
 3001465,30229-9,Band form neutrophils [#/volume] in Blood by Automated count,LOINC,anc,ANC labs,labs
 3008939,763-3,Band form neutrophils [#/volume] in Blood by Manual count,LOINC,anc,ANC labs,labs

@@ -1,0 +1,5 @@
+variable,domain_tbl,concept_field,date_field,codeset_name,filter_logic
+refills,de_hydroxyurea,refills,drug_exposure_start_date,meta_refills,NA
+quantity,de_hydroxyurea,quantity,drug_exposure_start_date,meta_quantity,NA
+frequency,de_hydroxyurea,frequency,drug_exposure_start_date,meta_frequency,NA
+days_supply,de_hydroxyurea,days_supply,drug_exposure_start_date,meta_days_supply,NA

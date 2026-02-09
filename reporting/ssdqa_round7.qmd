@@ -1,0 +1,79 @@
+---
+title: "SCA SSDQA Round 7"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(postgres_session)
+
+```
+
+## Cohort Attrition
+
+The attrition steps are as follows:
+```{r}
+
+tb <- ca_output(process_output = results_tbl('ca_ms_exp_cs_r7') %>% collect(),
+                large_n = FALSE)
+
+tb[[2]]
+
+```
+
+### Multi Site, Exploratory, Cross-Sectional
+
+:::{.panel-tabset}
+
+# Number of Patients
+```{r}
+
+grph <- ca_output(process_output = results_tbl('ca_ms_exp_cs_r7') %>% collect(),
+                  var_col = 'num_pts')
+
+make_interactive_squba(grph[[1]])
+
+```
+
+# Retention
+```{r}
+
+grph <- ca_output(process_output = results_tbl('ca_ms_exp_cs_r7') %>% collect(),
+                  var_col = 'prop_retained_start')
+
+make_interactive_squba(grph[[1]])
+
+```
+:::
+
+## Sensitivity to Selection Criteria
+
+Comparison cohort: apply an additional attrition criteria on top of the original cohort to require > 1 SCA diagnosis at least 30 days apart
+
+```{r}
+
+grph <- ssc_output(process_output = results_tbl('ssc_ms_exp_cs_r7') %>% collect(),
+                   alt_cohort_filter = '1+ SCA Dx')
+
+make_interactive_squba(grph[[1]])
+make_interactive_squba(grph[[2]])
+
+```

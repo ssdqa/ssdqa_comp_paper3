@@ -176,3 +176,50 @@ scv_input_r6 <- read_codeset('input_scv_domain', 'ccccc') %>%
           vocabulary_field = NA)
 
 readr::write_csv(scv_input_r6, 'specs/input_scv_domains_r6.csv')
+
+####' `Round 8 DQ`
+
+#' ** Expected Variables Present **
+
+hu_codes <- read_codeset("rx_hydroxyurea") %>% distinct(concept_id) %>% pull()
+hu_codes_str <- paste0(hu_codes, collapse = ', ')
+
+evp_input_r8 <- tibble(variable = c('refills', 'quantity', 'frequency', 'days_supply'),
+                       domain_tbl = c('de_hydroxyurea', 'de_hydroxyurea', 'de_hydroxyurea', 'de_hydroxyurea'),
+                       concept_field = c('refills', 'quantity', 'frequency', 'days_supply'),
+                       date_field = c('drug_exposure_start_date', 'drug_exposure_start_date', 
+                                      'drug_exposure_start_date', 'drug_exposure_start_date'),
+                       codeset_name = c('meta_refills', 'meta_quantity', 'meta_frequency', 'meta_days_supply'),
+                       filter_logic = c(NA, NA, NA, NA))
+
+readr::write_csv(evp_input_r8, 'specs/input_evp_r8.csv')
+
+#' ** Quantitative Variable Distribution **
+
+qvd_input_r8 <- tibble(value_name = c('Hydroxyurea refills', 'Hydroxyurea quantity',
+                                      'Hydroxyurea days_supply'),
+                       domain_tbl = c('drug_exposure', 'drug_exposure', 'drug_exposure'),
+                       value_field = c('refills', 'quantity', 'days_supply'),
+                       date_field = c('drug_exposure_start_date', 'drug_exposure_start_date', 
+                                      'drug_exposure_start_date'),
+                       concept_field = c('drug_concept_id', 'drug_concept_id', 'drug_concept_id'),
+                       codeset_name = c('rx_hydroxyurea', 'rx_hydroxyurea', 'rx_hydroxyurea'),
+                       filter_logic = c(NA, NA, NA))
+
+readr::write_csv(qvd_input_r8, 'specs/input_qvd_r8.csv')
+
+#' ** Patient Record Consistency **
+
+prc_input_r8 <- tibble(event = c('A', 'B'),
+                       event_label = c('Hydroxyurea prescription', 'Hydroxyurea admin'),
+                       domain_tbl = c('drug_exposure', 'drug_exposure') ,
+                       concept_field = c('drug_concept_id', 'drug_concept_id'),
+                       date_field = c('drug_exposure_start_date', 'drug_exposure_start_date'),
+                       #vocabulary_field,
+                       codeset_name = c('rx_hydroxyurea', 'rx_hydroxyurea'),
+                       filter_logic = c("drug_type_concept_id == 38000177",
+                                        "drug_type_concept_id == 38000180"))
+
+readr::write_csv(prc_input_r8, 'specs/input_prc_r8.csv')
+
+

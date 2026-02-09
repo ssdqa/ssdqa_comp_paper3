@@ -83,6 +83,30 @@ labs_remap <- cdm_tbl('measurement_labs') %>%
   mutate(value_as_number = as.numeric(value_as_number))
 output_tbl(labs_remap, 'cdm_measurement_labs_remap')
 
+## remap drugs based on dq results
+unmapped_drugs <- read_codeset('unmapped_labs') %>%
+  pull(concept_id)
+
+drugs_remap <- cdm_tbl('drug_exposure') %>%
+  rename('og_drug_concept_id' = 'drug_concept_id') %>%
+  mutate(eval_name = tolower(drug_source_value),
+         drug_concept_id = case_when(str_like(eval_name, '%hydroxyurea%') &
+                                      og_drug_concept_id %in% unmapped_drugs ~ 2000000998L,
+                                      str_like(eval_name, '%droxia%') &
+                                        og_drug_concept_id %in% unmapped_drugs ~ 2000000998L,
+                                      str_like(eval_name, '%siklos%') &
+                                        og_drug_concept_id %in% unmapped_drugs ~ 2000000998L,
+                                      str_like(eval_name, '%hydrea%') &
+                                        og_drug_concept_id %in% unmapped_drugs ~ 2000000998L,
+                                      str_like(eval_name, '%hydroxyur%') &
+                                        og_drug_concept_id %in% unmapped_drugs ~ 2000000998L,
+                                      og_drug_concept_id == 19010309 &
+                                       str_like(eval_name, '%hydroxyurea%') ~ 2000000998L,
+                                     TRUE ~ og_drug_concept_id)) %>%
+  select(-eval_name) #%>%
+  #mutate(value_as_number = as.numeric(value_as_number))
+output_tbl(drugs_remap %>% mutate(quantity = as.numeric(quantity)), 
+           'cdm_drug_exposure_remap')
 
 ## update concept sets with remap concepts
 
@@ -99,3 +123,10 @@ heme_labs <- read_codeset('lab_scd') %>%
           'concept_name' = 'Remapped SCD Labs',
           'vocabulary_id' = 'PEDSnet')
 readr::write_csv(heme_labs, 'specs/lab_scd.csv')
+
+hydrox <- read_codeset('rx_hydroxyurea') %>%
+  add_row('concept_id' = 2000000998L,
+          'concept_code' = 'PEDSnet Remap',
+          'concept_name' = 'Remapped Hydroxyurea',
+          'vocabulary_id' = 'PEDSnet')
+readr::write_csv(hydrox, 'specs/rx_hydroxyurea.csv')

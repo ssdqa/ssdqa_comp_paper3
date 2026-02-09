@@ -1,0 +1,118 @@
+---
+title: "SCA SSDQA Round 6"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(postgres_session)
+
+```
+
+## Source and Concept Vocabularies
+
+### Hemoglobin Labs
+
+Identified relevant source values with the following string search criteria:
+ 
+ - `718-7` (loinc code frequently seen in these source values)
+ - `hemoglobin`
+ - `total hemoglobin`
+ - `cbc` + `hemoglobin`
+ - `cbc` + `hgb`
+ - `hb tot`
+
+Then, used the identified source values to pull the related codes to try and identify
+any potential mismappings or unmapped labs.
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r6_heme') %>% 
+             inner_join(vocabulary_tbl('concept') %>% 
+                         select(concept_id, concept_name)) %>% collect(),
+           code_type = 'cdm') %>%
+  cols_hide('source_concept_name')
+
+```
+
+### ANC Labs
+Identified relevant source values with the following string search criteria:
+
+ - `neutrophil`
+ - `neutrophils`
+ - `absolute neut`
+ - NOT `anti-neutrophil`
+ - NOT `segmented neutrophil`
+
+Then, used the identified source values to pull the related codes to try and identify
+any potential mismappings or unmapped labs.
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r6_anc') %>% 
+             inner_join(vocabulary_tbl('concept') %>% 
+                         select(concept_id, concept_name)) %>% collect(),
+           code_type = 'cdm') %>%
+  cols_hide('source_concept_name')
+
+```
+
+### MCV Labs
+Identified relevant source values with the following string search criteria:
+ 
+ - `mcv`
+ - `mean corpuscular volume`
+ - `mean cell volume`
+
+Then, used the identified source values to pull the related codes to try and identify
+any potential mismappings or unmapped labs.
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r6_mcv') %>%
+             inner_join(vocabulary_tbl('concept') %>% 
+                         select(concept_id, concept_name)) %>% collect(),
+           code_type = 'cdm') %>%
+  cols_hide('source_concept_name')
+
+```
+
+### Hydroxyurea
+Identified relevant source values with the following string search criteria:
+
+ - `hydroxyurea`
+ - `droxia`
+ - `siklos`
+ - `hydrea`
+ - `hydroxyur`
+
+Then, used the identified source values to pull the related codes to try and identify
+any potential mismappings or unmapped labs.
+
+```{r}
+
+scv_output(process_output = results_tbl('scv_ms_exp_cs_r6_hdrx') %>%
+             inner_join(vocabulary_tbl('concept') %>% 
+                         select(concept_id, concept_name)) %>% collect(),
+           code_type = 'cdm') %>%
+  cols_hide('source_concept_name')
+
+```

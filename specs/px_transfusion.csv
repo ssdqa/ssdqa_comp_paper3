@@ -1,0 +1,75 @@
+concept_id,concept_code,concept_name,vocabulary_id
+2788673,30230H0,"Transfusion of Autologous Whole Blood into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788674,30230H1,"Transfusion of Nonautologous Whole Blood into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788677,30230K0,"Transfusion of Autologous Frozen Plasma into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788678,30230K1,"Transfusion of Nonautologous Frozen Plasma into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788679,30230L0,"Transfusion of Autologous Fresh Plasma into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788680,30230L1,"Transfusion of Nonautologous Fresh Plasma into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788681,30230M0,"Transfusion of Autologous Plasma Cryoprecipitate into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788682,30230M1,"Transfusion of Nonautologous Plasma Cryoprecipitate into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788683,30230N0,"Transfusion of Autologous Red Blood Cells into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788684,30230N1,"Transfusion of Nonautologous Red Blood Cells into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788685,30230P0,"Transfusion of Autologous Frozen Red Cells into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788686,30230P1,"Transfusion of Nonautologous Frozen Red Cells into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788689,30230R0,"Transfusion of Autologous Platelets into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788690,30230R1,"Transfusion of Nonautologous Platelets into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788693,30230T0,"Transfusion of Autologous Fibrinogen into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788694,30230T1,"Transfusion of Nonautologous Fibrinogen into Peripheral Vein, Open Approach (Deprecated)",ICD10PCS
+2788706,30233H0,"Transfusion of Autologous Whole Blood into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788707,30233H1,"Transfusion of Nonautologous Whole Blood into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788710,30233K0,"Transfusion of Autologous Frozen Plasma into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788711,30233K1,"Transfusion of Nonautologous Frozen Plasma into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788712,30233L0,"Transfusion of Autologous Fresh Plasma into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788713,30233L1,"Transfusion of Nonautologous Fresh Plasma into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788714,30233M0,"Transfusion of Autologous Plasma Cryoprecipitate into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788715,30233M1,"Transfusion of Nonautologous Plasma Cryoprecipitate into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788716,30233N0,"Transfusion of Autologous Red Blood Cells into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788717,30233N1,"Transfusion of Nonautologous Red Blood Cells into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788718,30233P0,"Transfusion of Autologous Frozen Red Cells into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788719,30233P1,"Transfusion of Nonautologous Frozen Red Cells into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788722,30233R0,"Transfusion of Autologous Platelets into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788723,30233R1,"Transfusion of Nonautologous Platelets into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788726,30233T0,"Transfusion of Autologous Fibrinogen into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788727,30233T1,"Transfusion of Nonautologous Fibrinogen into Peripheral Vein, Percutaneous Approach",ICD10PCS
+2788929,30240H0,"Transfusion of Autologous Whole Blood into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788930,30240H1,"Transfusion of Nonautologous Whole Blood into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788933,30240K0,"Transfusion of Autologous Frozen Plasma into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788934,30240K1,"Transfusion of Nonautologous Frozen Plasma into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788935,30240L0,"Transfusion of Autologous Fresh Plasma into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788936,30240L1,"Transfusion of Nonautologous Fresh Plasma into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788937,30240M0,"Transfusion of Autologous Plasma Cryoprecipitate into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788938,30240M1,"Transfusion of Nonautologous Plasma Cryoprecipitate into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788939,30240N0,"Transfusion of Autologous Red Blood Cells into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788940,30240N1,"Transfusion of Nonautologous Red Blood Cells into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788941,30240P0,"Transfusion of Autologous Frozen Red Cells into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788942,30240P1,"Transfusion of Nonautologous Frozen Red Cells into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788945,30240R0,"Transfusion of Autologous Platelets into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788946,30240R1,"Transfusion of Nonautologous Platelets into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788949,30240T0,"Transfusion of Autologous Fibrinogen into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788950,30240T1,"Transfusion of Nonautologous Fibrinogen into Central Vein, Open Approach (Deprecated)",ICD10PCS
+2788962,30243H0,"Transfusion of Autologous Whole Blood into Central Vein, Percutaneous Approach",ICD10PCS
+2788963,30243H1,"Transfusion of Nonautologous Whole Blood into Central Vein, Percutaneous Approach",ICD10PCS
+2788966,30243K0,"Transfusion of Autologous Frozen Plasma into Central Vein, Percutaneous Approach",ICD10PCS
+2788967,30243K1,"Transfusion of Nonautologous Frozen Plasma into Central Vein, Percutaneous Approach",ICD10PCS
+2788968,30243L0,"Transfusion of Autologous Fresh Plasma into Central Vein, Percutaneous Approach",ICD10PCS
+2788969,30243L1,"Transfusion of Nonautologous Fresh Plasma into Central Vein, Percutaneous Approach",ICD10PCS
+2788970,30243M0,"Transfusion of Autologous Plasma Cryoprecipitate into Central Vein, Percutaneous Approach",ICD10PCS
+2788971,30243M1,"Transfusion of Nonautologous Plasma Cryoprecipitate into Central Vein, Percutaneous Approach",ICD10PCS
+2788972,30243N0,"Transfusion of Autologous Red Blood Cells into Central Vein, Percutaneous Approach",ICD10PCS
+2788973,30243N1,"Transfusion of Nonautologous Red Blood Cells into Central Vein, Percutaneous Approach",ICD10PCS
+2788974,30243P0,"Transfusion of Autologous Frozen Red Cells into Central Vein, Percutaneous Approach",ICD10PCS
+2788975,30243P1,"Transfusion of Nonautologous Frozen Red Cells into Central Vein, Percutaneous Approach",ICD10PCS
+2788978,30243R0,"Transfusion of Autologous Platelets into Central Vein, Percutaneous Approach",ICD10PCS
+2788979,30243R1,"Transfusion of Nonautologous Platelets into Central Vein, Percutaneous Approach",ICD10PCS
+2788982,30243T0,"Transfusion of Autologous Fibrinogen into Central Vein, Percutaneous Approach",ICD10PCS
+2788983,30243T1,"Transfusion of Nonautologous Fibrinogen into Central Vein, Percutaneous Approach",ICD10PCS
+2108119,36430,"Transfusion, blood or blood components",CPT4
+2108163,36514,Therapeutic apheresis; for plasma pheresis,CPT4
+2108151,36512,Therapeutic apheresis; for red blood cells,CPT4
+4125928,288170000,Packed blood cell transfusion,SNOMED
+2008373,99.71,Therapeutic plasmapheresis,ICD9Proc
+4024656,116859006,Transfusion of blood product,SNOMED
+4049372,20720000,Plasmapheresis,SNOMED
+4233006,438839005,Erythrocytapheresis,SNOMED
+4323715,71493000,Transfusion of packed red blood cells,SNOMED
+4130829,12719002,Platelet transfusion,SNOMED

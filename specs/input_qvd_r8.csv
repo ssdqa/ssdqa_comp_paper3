@@ -1,0 +1,4 @@
+value_name,domain_tbl,value_field,date_field,concept_field,codeset_name,filter_logic
+Hydroxyurea refills,drug_exposure,refills,drug_exposure_start_date,drug_concept_id,rx_hydroxyurea,NA
+Hydroxyurea quantity,drug_exposure,quantity,drug_exposure_start_date,drug_concept_id,rx_hydroxyurea,NA
+Hydroxyurea days_supply,drug_exposure,days_supply,drug_exposure_start_date,drug_concept_id,rx_hydroxyurea,NA
