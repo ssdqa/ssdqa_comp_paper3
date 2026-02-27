@@ -1,0 +1,392 @@
+---
+title: "Hydroxyurea Treatment Summary"
+format: 
+  html:
+    toc: true
+    toc-location: left
+    html-table-processing: none
+    embed-resources: true
+---
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+library(srcr)
+library(stringr)
+library(dplyr)
+
+setwd(here::here())
+source('setup/argos_wrapper.R')
+
+trino_session <- initialize_session(session_name = 'ssdqa_trino',
+                                    db_conn = '.config_files/argos_trino_v57.json',
+                                    is_json = TRUE,
+                                    cdm_schema = 'ssdqa_paper3',
+                                    results_schema = 'ssdqa_paper3', 
+                                    vocabulary_schema = 'v57_vocabulary',
+                                    retain_intermediates = TRUE,
+                                    db_trace = TRUE,
+                                    results_tag = '')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(trino_session)
+
+```
+
+```{r, include=FALSE}
+
+treated_props <- results_tbl('hu_visits_labelled') %>%
+  filter(hu_label != 'censored',
+         visit_concept_id %in% c(9201, 9202, 581399, 9203, 2000000048,
+                                 2000000088)) %>%
+  group_by(site, person_id, hu_label) %>%
+  summarise(nvis = n_distinct(visit_occurrence_id)) %>%
+  group_by(site, person_id) %>%
+  mutate(totvis = sum(nvis),
+         propvis = as.numeric(nvis) / as.numeric(totvis)) %>%
+  collect()
+
+half_treat <- treated_props %>%
+  filter(hu_label == 'hydroxyurea') %>%
+  filter(propvis >= 0.5) %>%
+  group_by(site) %>%
+  summarise(`50pct_pt` = n_distinct(person_id))
+
+sensitivity_treat <- treated_props %>%
+  filter(hu_label == 'hydroxyurea') %>%
+  filter(propvis >= 0.8) %>%
+  group_by(site) %>%
+  summarise(`80pct_pt` = n_distinct(person_id))
+
+summ_treat <- results_tbl('final_cohort_censored') %>%
+  collect() %>%
+  group_by(site) %>%
+  summarise(tot_pt = n_distinct(person_id)) %>%
+  left_join(half_treat) %>%
+  left_join(sensitivity_treat) %>%
+  mutate(`80pct_pt` = ifelse(is.na(`80pct_pt`), 0, `80pct_pt`)) %>%
+  mutate(prop50 = as.numeric(`50pct_pt`) / as.numeric(tot_pt),
+         prop80 = as.numeric(`80pct_pt`) / as.numeric(tot_pt))
+
+summ_treat_hu <- cdm_tbl('de_hydroxyurea') %>%
+  inner_join(results_tbl('final_cohort_censored')) %>%
+  group_by(site) %>%
+  summarise(tot_pt = n_distinct(person_id)) %>%
+  collect() %>%
+  left_join(half_treat) %>%
+  left_join(sensitivity_treat) %>%
+  mutate(`80pct_pt` = ifelse(is.na(`80pct_pt`), 0, `80pct_pt`)) %>%
+  mutate(prop50 = as.numeric(`50pct_pt`) / as.numeric(tot_pt),
+         prop80 = as.numeric(`80pct_pt`) / as.numeric(tot_pt))
+
+```
+
+## Distribution of Visit Types
+
+Classification of all visits after the patient's first SCA diagnosis
+
+:::{.panel-tabset}
+
+# Treated Visits
+```{r}
+
+treated_props %>%
+  filter(hu_label == 'hydroxyurea') %>%
+  ggplot(aes(x = propvis)) +
+  geom_histogram(binwidth = 0.1) +
+  facet_wrap(~site, scales = 'free_y', nrow = 4) +
+  theme_bw()
+
+```
+
+# Untreated Visits
+```{r}
+
+treated_props %>%
+  filter(hu_label == 'no hydroxyurea') %>%
+  ggplot(aes(x = propvis)) +
+  geom_histogram(binwidth = 0.1) +
+  facet_wrap(~site, scales = 'free_y', nrow = 4) +
+  theme_bw()
+
+```
+
+:::
+
+# Treated Patients (50%)
+
+## Out of all patients
+
+```{r}
+
+summ_treat %>%
+  mutate(site = paste0(site, '\nTotal N: ', tot_pt)) %>%
+  ggplot(aes(y = site, x = prop50, fill = site)) +
+  geom_col(show.legend = FALSE) +
+  ggsci::scale_fill_igv() +
+  theme_bw() +
+  theme(axis.title.y = element_blank()) +
+  labs(x = 'Prop. Patients with 50%+ of Visits \n on Hydroxyurea')
+
+```
+
+## Out of hydroxurea exposed patients
+
+```{r}
+
+summ_treat_hu %>%
+  mutate(site = paste0(site, '\nTotal N: ', tot_pt)) %>%
+  ggplot(aes(y = site, x = prop50, fill = site)) +
+  geom_col(show.legend = FALSE) +
+  ggsci::scale_fill_igv() +
+  theme_bw() +
+  theme(axis.title.y = element_blank()) +
+  labs(x = 'Prop. Patients with 50%+ of Visits \n on Hydroxyurea')
+
+```
+
+# Treated Patients (80%)
+
+## Out of all patients
+
+```{r}
+
+summ_treat %>%
+  mutate(site = paste0(site, '\nTotal N: ', tot_pt)) %>%
+  ggplot(aes(y = site, x = prop80, fill = site)) +
+  geom_col(show.legend = FALSE) +
+  ggsci::scale_fill_igv() +
+  theme_bw() +
+  theme(axis.title.y = element_blank()) +
+  labs(x = 'Prop. Patients with 80%+ of Visits \n on Hydroxyurea')
+
+```
+
+## Out of hydroxyurea treated patients
+
+```{r}
+
+summ_treat_hu %>%
+  mutate(site = paste0(site, '\nTotal N: ', tot_pt)) %>%
+  ggplot(aes(y = site, x = prop80, fill = site)) +
+  geom_col(show.legend = FALSE) +
+  ggsci::scale_fill_igv() +
+  theme_bw() +
+  theme(axis.title.y = element_blank()) +
+  labs(x = 'Prop. Patients with 80%+ of Visits \n on Hydroxyurea')
+
+```
+
+# Length of Prescription
+
+## Pre-Normalization
+
+```{r}
+
+results_tbl('de_hydroxyurea_windows') %>%
+  ggplot(aes(x = length_rx, y = site)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x = 'Length of Prescription')
+
+```
+
+## Post-Normalization
+```{r}
+
+results_tbl('de_hydroxyurea_windows') %>%
+  ggplot(aes(x = days_supply, y = site)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x = 'Length of Prescription')
+
+```
+
+# Time Between Visits (Face to Face Only)
+
+## Overall (All)
+```{r}
+
+time_bw_vis <- results_tbl('hu_visits_labelled') %>%
+  filter(hu_label != 'censored',
+         visit_concept_id %in% c(9201, 9202, 581399, 9203, 2000000048,
+                                 2000000088)) %>%
+  left_join(cdm_tbl('cdm_person') %>% select(person_id, birth_date)) %>%
+  arrange(site, person_id, visit_start_date) %>%
+  group_by(site, person_id) %>%
+  #filter(visit_concept_id %in% c(9201, 9202, 9203)) %>%
+  mutate(time_bw_visits = date_diff('day', lag(visit_end_date), 
+                                    visit_start_date)) %>% collect()
+
+time_bw_vis %>%
+  ggplot(aes(x = time_bw_visits, y = site)) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x = 'Time between Visits')
+
+```
+
+## Overall (only above 0)
+```{r}
+time_bw_vis %>%
+  filter(time_bw_visits > 0) %>%
+  ggplot(aes(x = time_bw_visits, y = site)) +
+  geom_boxplot(outliers = TRUE) +
+  theme_bw() +
+  labs(x = 'Time between Visits')
+```
+
+```{r}
+time_bw_vis %>%
+  filter(time_bw_visits > 0) %>%
+  ggplot(aes(x = time_bw_visits, y = site)) +
+  geom_boxplot(outliers = FALSE) +
+  theme_bw() +
+  labs(x = 'Time between Visits')
+```
+
+## Per Patient (all)
+```{r}
+
+time_bw_vis %>%
+  #filter(visit_concept_id %in% c(9201, 9202, 9203)) %>%
+  group_by(site, person_id) %>%
+  summarise(med_time_bw = median(time_bw_visits, na.rm = TRUE)) %>%
+  group_by(site) %>%
+  summarise(med_time_bw2 = median(med_time_bw, na.rm = TRUE),
+            q1_time_bw = quantile(med_time_bw, 0.25, na.rm = TRUE),
+            q3_time_bw = quantile(med_time_bw, 0.75, na.rm = TRUE)) %>%
+  ggplot(aes(y = site)) +
+  geom_linerange(aes(xmin = q1_time_bw, xmax = q3_time_bw)) +
+  geom_point(aes(x = med_time_bw2)) +
+  theme_bw() +
+  ggtitle('Median of the Median Days between Visits per Patient') +
+  labs(x = 'Time between Visits')
+
+```
+
+## Per Patient (only above 0)
+```{r}
+
+time_bw_vis %>%
+  #filter(visit_concept_id %in% c(9201, 9202, 9203)) %>%
+  filter(time_bw_visits > 0) %>%
+  group_by(site, person_id) %>%
+  summarise(med_time_bw = median(time_bw_visits, na.rm = TRUE)) %>%
+  group_by(site) %>%
+  summarise(med_time_bw2 = median(med_time_bw, na.rm = TRUE),
+            q1_time_bw = quantile(med_time_bw, 0.25, na.rm = TRUE),
+            q3_time_bw = quantile(med_time_bw, 0.75, na.rm = TRUE)) %>%
+  ggplot(aes(y = site)) +
+  geom_linerange(aes(xmin = q1_time_bw, xmax = q3_time_bw)) +
+  geom_point(aes(x = med_time_bw2)) +
+  theme_bw() +
+  ggtitle('Median of the Median Days between Visits per Patient') +
+  labs(x = 'Time between Visits')
+
+```
+
+
+# Age-Year Computation
+```{r, include=FALSE}
+
+ay_test <- results_tbl('hu_visits_labelled') %>%
+  filter(hu_label != 'censored',
+         visit_concept_id %in% c(9201, 9202, 581399, 9203, 2000000048,
+                                 2000000088)) %>%
+  left_join(cdm_tbl('cdm_person') %>% select(person_id, birth_date)) %>%
+  mutate(visit_age = date_diff('day', birth_date, visit_start_date),
+         age_year = floor(visit_age / 365.25),
+         age_year = as.numeric(age_year)) %>%
+  group_by(site, person_id, age_year, hu_label) %>%
+  summarise(nvis = n_distinct(visit_occurrence_id)) %>%
+  group_by(site, person_id, age_year) %>%
+  mutate(totvis = sum(nvis),
+         propvis = as.numeric(nvis) / as.numeric(totvis)) %>%
+  collect()
+
+half_treat <- ay_test %>%
+  filter(hu_label == 'hydroxyurea') %>%
+  filter(propvis >= 0.5) %>%
+  group_by(site, age_year) %>%
+  summarise(`50pct_pt` = n_distinct(person_id))
+
+sensitivity_treat <- ay_test %>%
+  filter(hu_label == 'hydroxyurea') %>%
+  filter(propvis >= 0.8) %>%
+  group_by(site, age_year) %>%
+  summarise(`80pct_pt` = n_distinct(person_id))
+
+summ_treat <- ay_test %>%
+  collect() %>%
+  group_by(site, age_year) %>%
+  summarise(tot_pt = n_distinct(person_id)) %>%
+  left_join(half_treat) %>%
+  left_join(sensitivity_treat) %>%
+  mutate(`80pct_pt` = ifelse(is.na(`80pct_pt`), 0, `80pct_pt`)) %>%
+  mutate(prop50 = as.numeric(`50pct_pt`) / as.numeric(tot_pt),
+         prop80 = as.numeric(`80pct_pt`) / as.numeric(tot_pt))
+
+summ_treat_hu <- cdm_tbl('de_hydroxyurea') %>%
+  collect() %>%
+  inner_join(ay_test) %>%
+  group_by(site, age_year) %>%
+  summarise(tot_pt = n_distinct(person_id)) %>%
+  collect() %>%
+  left_join(half_treat) %>%
+  left_join(sensitivity_treat) %>%
+  mutate(`80pct_pt` = ifelse(is.na(`80pct_pt`), 0, `80pct_pt`)) %>%
+  mutate(prop50 = as.numeric(`50pct_pt`) / as.numeric(tot_pt),
+         prop80 = as.numeric(`80pct_pt`) / as.numeric(tot_pt))
+
+```
+
+## Out of all patients
+
+- Numerator is patients with at least 50% of visits with hydroxyurea in that age year
+- Denominator is patients with at least one visit in that age year
+```{r}
+plt <- summ_treat %>%
+  mutate(tooltip = paste0('Prop. = ', round(prop50, 2),
+                          '\nCount = ', `50pct_pt`,
+                          '\n Age Year = ', age_year)) %>%
+  ggplot(aes(x = age_year, y = prop50, color = site)) +
+  geom_line() +
+  geom_point(aes(text = tooltip)) +
+  theme_bw() +
+  scale_x_continuous(limits = c(-1,26), expand = c(0, 0)) +
+  labs(x = 'Age-Year',
+       y = 'Prop. Patients with 50%+ of Visits \n on Hydroxyurea')
+
+plotly::ggplotly(plt, tooltip = 'text')
+```
+
+## Out of hydroxyurea treated patients
+
+Patients with at least one exposure to hydroxyurea all-time
+
+- Numerator is patients with at least 50% of visits with hydroxyurea in that age year
+- Denominator is patients with at least one visit in that age year
+```{r}
+
+plt <- summ_treat_hu %>%
+  mutate(tooltip = paste0('Prop. = ', round(prop50, 2),
+                          '\nCount = ', `50pct_pt`,
+                          '\n Age Year = ', age_year)) %>%
+  ggplot(aes(x = age_year, y = prop50, color = site)) +
+  geom_line() +
+  geom_point(aes(text = tooltip)) +
+  theme_bw() +
+  scale_x_continuous(limits = c(-1,26), expand = c(0, 0)) +
+  labs(x = 'Age-Year',
+       y = 'Prop. Patients with 50%+ of Visits \n on Hydroxyurea')
+
+plotly::ggplotly(plt, tooltip = 'text')
+
+```

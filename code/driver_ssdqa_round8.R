@@ -48,6 +48,8 @@ evp_ms_exp_cs_r8 <- evp_process(cohort = results_tbl("sca_round7_cohort"),
                                 time = FALSE)
 
 postgres_session$output_tbl(evp_ms_exp_cs_r8, 'evp_ms_exp_cs_r8')
+readr::write_csv(postgres_session$results_tbl('evp_ms_exp_cs_r8') %>%
+                  collect(), 'results/evp_ms_exp_cs_dqr8.csv')
 
 evp_ms_exp_la_r8 <- evp_process(cohort = results_tbl("sca_round7_cohort"),
                                 omop_or_pcornet = 'omop',
@@ -59,6 +61,8 @@ evp_ms_exp_la_r8 <- evp_process(cohort = results_tbl("sca_round7_cohort"),
                                 time_span = c('2011-01-01', '2025-01-01'))
 
 postgres_session$output_tbl(evp_ms_exp_la_r8, 'evp_ms_exp_la_r8')
+readr::write_csv(postgres_session$results_tbl('evp_ms_exp_la_r8') %>%
+                   collect(), 'results/evp_ms_exp_la_dqr8.csv')
 
 ## QVD
 #' `Multi Site, Exploratory, Cross-Sectional`
@@ -69,6 +73,8 @@ qvd_ms_exp_cs_r8 <- qvd_process(cohort = results_tbl('sca_round7_cohort'),
                                 qvd_value_file = read_codeset('input_qvd_r8', 'cccc'))
 
 postgres_session$output_tbl(qvd_ms_exp_cs_r8, 'qvd_ms_exp_cs_r8')
+readr::write_csv(postgres_session$results_tbl('qvd_ms_exp_cs_r8') %>%
+                   collect(), 'results/qvd_ms_exp_cs_dqr8.csv')
 
 
 #' `Multi Site, Exploratory, Longitudinal`
@@ -82,6 +88,8 @@ qvd_ms_exp_la_r8 <- qvd_process(cohort = results_tbl('sca_round7_cohort'),
                                 qvd_value_file = read_codeset('input_qvd_r8', 'cccc'))
 
 postgres_session$output_tbl(qvd_ms_exp_la_r8, 'qvd_ms_exp_la_r8')
+readr::write_csv(postgres_session$results_tbl('qvd_ms_exp_la_r8') %>%
+                   collect(), 'results/qvd_ms_exp_la_dqr8.csv')
 
 
 ## PRC

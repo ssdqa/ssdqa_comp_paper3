@@ -4,14 +4,14 @@ attrition_counts <- list()
 
 #' `Step 1: Patients with SCD diagnosis, including SCA` 
 s1_ch <- cdm_tbl('condition_occurrence') %>%
-  filter(condition_start_date >= '2011-01-01',
-         condition_start_date <= '2024-12-31') %>%
+  filter(condition_start_date >= as.Date('2011-01-01'),
+         condition_start_date <= as.Date('2024-12-31')) %>%
   inner_join(load_codeset('dx_scd'), by = c('condition_concept_id' = 'concept_id'))
 
 attrition_counts$step1 <- s1_ch %>%
   group_by(site) %>%
   summarise(num_pts = n_distinct(person_id)) %>%
-  mutate(step_number = 1,
+  mutate(step_number = 1L,
          attrition_step = 'Patients with SCD diagnosis, including SCA') %>%
   collect()
 
@@ -23,13 +23,13 @@ s2_ch <- cdm_tbl('condition_occurrence') %>%
   group_by(site, person_id) %>%
   filter(condition_start_date == min(condition_start_date)) %>%
   rename('first_sca_dx' = 'condition_start_date') %>%
-  filter(first_sca_dx >= '2011-01-01' & first_sca_dx <= '2024-12-31') %>%
-  select(site, person_id, first_sca_dx) %>% compute_new()
+  filter(first_sca_dx >= as.Date('2011-01-01') & first_sca_dx <= as.Date('2024-12-31')) %>%
+  select(site, person_id, first_sca_dx) #%>% compute_new()
 
 attrition_counts$step2 <- s2_ch %>%
   group_by(site) %>%
   summarise(num_pts = n_distinct(person_id)) %>%
-  mutate(step_number = 2,
+  mutate(step_number = 2L,
          attrition_step = 'Patients with SCA diagnosis') %>%
   collect()
 
@@ -37,7 +37,7 @@ attrition_counts$step2 <- s2_ch %>%
 s3_ch <- cdm_tbl('person') %>%
   select(site, person_id, birth_date) %>%
   inner_join(s2_ch) %>%
-  mutate(age_first_dx = first_sca_dx - birth_date,
+  mutate(age_first_dx = date_diff('day', birth_date, first_sca_dx),
          age_first_dx = as.numeric(age_first_dx) / 365.25) %>%
   filter(age_first_dx < 18)
 
@@ -47,7 +47,7 @@ output_tbl(s3_ch %>% distinct(site, person_id, first_sca_dx),
 attrition_counts$step3 <- s3_ch %>%
   group_by(site) %>%
   summarise(num_pts = n_distinct(person_id)) %>%
-  mutate(step_number = 3,
+  mutate(step_number = 3L,
          attrition_step = 'Patients with SCA < 18 years old at first diagnosis') %>%
   collect()
 
@@ -58,7 +58,7 @@ s4_ch <- cdm_tbl('measurement_labs') %>%
   filter(measurement_date >= as.Date('2011-01-01'),
          measurement_date <= as.Date('2024-12-31')) %>%
   inner_join(load_codeset('lab_scd'), by = c('measurement_concept_id' = 'concept_id')) %>%
-  inner_join(s3_ch) %>%
+  inner_join(results_tbl('step3_cohort')) %>%
   select(site, person_id)
 
 attrition_counts$step4 <- s4_ch %>%
@@ -108,12 +108,12 @@ attrition_counts$step6 <- s6_ch %>%
 
 ##' `Patients with at least 2 SCA Diagnoses, at least 30 days apart`
 cht_sca_dx <- cdm_tbl('condition_occurrence') %>%
-  filter(condition_start_date => '2011-01-01' & condition_start_date <= '2024-01-01') %>%
+  filter(condition_start_date >= as.Date('2011-01-01') & condition_start_date <= as.Date('2024-12-31')) %>%
   inner_join(s6_ch) %>%
   inner_join(load_codeset('dx_sca'), by = c('condition_concept_id' = 'concept_id'))
 
 s7_ch <- cht_sca_dx %>%
-  group_by(site, person_id, start_date, end_date) %>%
+  group_by(site, person_id) %>%
   summarise(ndx = n(),
             min_dx = min(condition_start_date), 
             max_dx = max(condition_start_date)) %>%
@@ -128,18 +128,19 @@ attrition_counts$step7 <- s7_ch %>%
          attrition_step = 'Patients with at least 2 SCA diagnoses at least 30 days apart') %>%
   collect()
 
-output_tbl(s7_ch, 'final_cohort_precensor')
+output_tbl(reduce(attrition_counts, dplyr::union), 'attrition_counts')
+output_tbl(s7_ch %>% distinct(site, person_id), 'final_cohort_precensor')
 
 #################################################################################
 ## apply censorship criteria ##
 
 # start & last visit dates (default end)
-cht_start <- s2_ch %>%
-  inner_join(s7_ch) %>%
+cht_start <- results_tbl('step3_cohort') %>%
+  inner_join(results_tbl('final_cohort_precensor')) %>%
   select(site, person_id, first_sca_dx)
 
 last_visit <- cdm_tbl('visit_occurrence') %>%
-  inner_join(results_tbl('sca_round7_cohort')) %>%
+  inner_join(cht_start) %>%
   filter(visit_start_date >= as.Date('2011-01-01') &
            visit_start_date <= as.Date('2024-12-31')) %>%
   group_by(site, person_id) %>%
@@ -151,9 +152,9 @@ last_visit <- cdm_tbl('visit_occurrence') %>%
 bone_gene <- cdm_tbl('procedure_occurrence') %>%
   inner_join(load_codeset('px_bonemarrow_stemcell'), 
              by = c('procedure_concept_id' = 'concept_id')) %>%
-  inner_join(results_tbl('sca_round7_cohort')) %>%
-  filter(procedure_date >= as.Date(start_date), 
-         procedure_date <= as.Date('2024-01-01')) %>%
+  inner_join(cht_start) %>%
+  filter(procedure_date >= as.Date(first_sca_dx), 
+         procedure_date <= as.Date('2024-12-31')) %>%
   collect() %>%
   group_by(site, person_id) %>%
   filter(procedure_date == min(procedure_date)) %>%
@@ -166,9 +167,9 @@ expand_drugs <- get_descendants(codeset = load_codeset('rx_altdrug_ing'),
 
 other_drugs <- cdm_tbl('drug_exposure') %>%
   inner_join(expand_drugs, by = c('drug_concept_id' = 'concept_id')) %>%
-  inner_join(results_tbl('sca_round7_cohort')) %>%
-  filter(drug_exposure_start_date >= as.Date(start_date), 
-         drug_exposure_start_date <= as.Date('2024-01-01')) %>%
+  inner_join(cht_start) %>%
+  filter(drug_exposure_start_date >= as.Date(first_sca_dx), 
+         drug_exposure_start_date <= as.Date('2024-12-31')) %>%
   group_by(site, person_id) %>%
   filter(drug_exposure_start_date == min(drug_exposure_start_date)) %>%
   collect() %>%
@@ -177,10 +178,10 @@ other_drugs <- cdm_tbl('drug_exposure') %>%
 
 # long term transfusion (2 transfusions w/n 3+ weeks & < 6 weeks)
 
-transfusion_concepts <- load_codeset("px_blood_prod_transf", 'ccc') %>%
-  inner_join(vocabulary_tbl('concept'), by = c('code1' = 'concept_code')) %>%
-  select(concept_id, 'concept_code' = 'code1', concept_name, vocabulary_id) %>%
-  collect()
+# transfusion_concepts <- load_codeset("px_blood_prod_transf", 'ccc') %>%
+#   inner_join(vocabulary_tbl('concept'), by = c('code1' = 'concept_code')) %>%
+#   select(concept_id, 'concept_code' = 'code1', concept_name, vocabulary_id) %>%
+#   collect()
 
 ## Erythrocytapheresis (4233006)
 ## therapeutic apheresis, for red blood cells (2108151)
@@ -193,20 +194,20 @@ transfusion_concepts <- load_codeset("px_blood_prod_transf", 'ccc') %>%
 ## Platelet transfusion (4130829)
 ## Transfusion of packed red blood cells (4323715)
 
-additional_transfusions <- vocabulary_tbl('concept') %>%
-  filter(concept_id %in% c(4233006, 2108151, 2108163, 4049372, 2008373,
-                           4024656, 2108119, 4125928, 4130829, 4323715)) %>%
-  select(concept_id, concept_code, concept_name, vocabulary_id) %>%
-  collect()
-
-transfusion_concepts %>%
-  union(additional_transfusions) %>%
-  readr::write_csv('specs/px_transfusion.csv')
+# additional_transfusions <- vocabulary_tbl('concept') %>%
+#   filter(concept_id %in% c(4233006, 2108151, 2108163, 4049372, 2008373,
+#                            4024656, 2108119, 4125928, 4130829, 4323715)) %>%
+#   select(concept_id, concept_code, concept_name, vocabulary_id) %>%
+#   collect()
+# 
+# transfusion_concepts %>%
+#   union(additional_transfusions) %>%
+#   readr::write_csv('specs/px_transfusion.csv')
 
 transfuse_3_6_week <- cdm_tbl('procedure_occurrence') %>%
-  inner_join(results_tbl('sca_round7_cohort')) %>%
+  inner_join(cht_start) %>%
   inner_join(load_codeset('px_transfusion'), by = c('procedure_concept_id' = 'concept_id')) %>%
-  filter(procedure_date >= as.Date(start_date), procedure_date <= as.Date('2024-01-01')) %>%
+  filter(procedure_date >= as.Date(first_sca_dx), procedure_date <= as.Date('2024-12-31')) %>%
   filter(procedure_type_concept_id != 44786631) %>%
   arrange(site, person_id, procedure_date) %>%
   group_by(site, person_id) %>%
@@ -230,20 +231,39 @@ transfusion_dates <- transfuse_3_6_week %>%
   ungroup()
 
 
+####### 2 year visit gap ############
+biggap <- cdm_tbl('visit_occurrence') %>%
+  inner_join(cht_start) %>%
+  filter(visit_start_date >= first_sca_dx &
+           visit_start_date <= as.Date('2024-12-31')) %>%
+  arrange(site, person_id, visit_start_date) %>%
+  group_by(site, person_id) %>%
+  mutate(visit_gap = date_diff('day', lag(visit_start_date), visit_end_date)) %>%
+  filter(visit_gap > 730.5) %>% 
+  collect() %>%
+  group_by(site, person_id) %>%
+  filter(visit_start_date == min(visit_start_date)) %>%
+  mutate(continuous_care_stop = visit_start_date - visit_gap) %>%
+  distinct(site, person_id, continuous_care_stop) %>% ungroup()
+
+
 ####### Censorship Dates ############
 
-censored_cohort <- results_tbl('sca_round7_cohort') %>%
+censored_cohort <- cht_start %>%
   collect() %>%
   left_join(last_visit %>% collect()) %>%
   left_join(transfusion_dates) %>%
   left_join(other_drugs) %>%
   left_join(bone_gene) %>%
+  left_join(biggap) %>%
   group_by(site, person_id) %>%
   mutate(end_date = min(transfusion_initiation, alt_drug_initiation, bone_gene_date, last_visit_date,
+                        continuous_care_stop,
                         na.rm = TRUE),
          censorship_reason = case_when(end_date == transfusion_initiation ~ 'Transfusion',
                                        end_date == alt_drug_initiation ~ 'Alternate Drug Therapy',
                                        end_date == bone_gene_date ~ 'Bone Marrow Transplant or Gene Therapy',
+                                       end_date == continuous_care_stop ~ '> 2 Year Gap Between Encounters',
                                        TRUE ~ 'None / Last Visit'))
 
 output_tbl(censored_cohort, 'final_cohort_censored')

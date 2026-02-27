@@ -2,6 +2,7 @@
 
 cht_sca_dx <- cdm_tbl('condition_occurrence') %>%
   inner_join(results_tbl('sca_attrition_cohort_r5')) %>%
+  filter(condition_start_date >= as.Date('2011-01-01') & condition_start_date <= as.Date('2024-12-31')) %>%
   inner_join(load_codeset('dx_sca'), by = c('condition_concept_id' = 'concept_id'))
 
 twodx_30days <- cht_sca_dx %>%
@@ -38,6 +39,7 @@ ca_ms_exp <- ca_process(attrition_tbl = postgres_session$results_tbl('attrition_
                         start_step_num = 1)
 
 postgres_session$output_tbl(ca_ms_exp, 'ca_ms_exp_cs_r7')
+readr::write_csv(ca_ms_exp, 'results/ca_ms_exp_cs_dqr7.csv')
 
 ## Sensitivity to Selection Criteria
 ssc_ms_exp_cs_r7 <- ssc_process(base_cohort = results_tbl('sca_attrition_cohort_r5'),
@@ -54,3 +56,7 @@ ssc_ms_exp_cs_r7 <- ssc_process(base_cohort = results_tbl('sca_attrition_cohort_
 
 postgres_session$output_tbl(ssc_ms_exp_cs_r7$summary_values, 'ssc_ms_exp_cs_r7')
 postgres_session$output_tbl(ssc_ms_exp_cs_r7$cohort_overlap, 'ssc_ms_exp_cs_overlap_r7')
+
+readr::write_csv(postgres_session$results_tbl('ssc_ms_exp_cs_r7') %>% collect(), 
+                 'results/ssc_ms_exp_cs_dqr7.csv')
+

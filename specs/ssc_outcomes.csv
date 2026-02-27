@@ -58,6 +58,7 @@ concept_id,concept_code,concept_name,vocabulary_id,cluster,variable,domain
 44787041,74398-9,Neutrophils [#/volume] in Cord blood,LOINC,anc,ANC labs,labs
 3015586,30451-9,Segmented neutrophils [#/volume] in Blood,LOINC,anc,ANC labs,labs
 3027270,768-2,Segmented neutrophils [#/volume] in Blood by Manual count,LOINC,anc,ANC labs,labs
+4148615,30630007,Neutrophil count,SNOMED,anc,ANC labs,labs
 3094918,142868001,MCV - NOS,Nebraska Lexicon,mcv,MCV labs,labs
 40301727,142868001,MCV - NOS,SNOMED,mcv,MCV labs,labs
 45912123,851,MEAN CORPUSCULAR VOLUME,CIEL,mcv,MCV labs,labs
