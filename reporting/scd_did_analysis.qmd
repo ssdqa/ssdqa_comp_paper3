@@ -1,0 +1,924 @@
+---
+title: "scd_did_analysis"
+format: 
+  html:
+    embed-resources: true
+    html-table-processing: none
+    toc: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+library(did)
+
+setwd(here::here())
+source('setup/setup.R')
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(trino_session)
+
+```
+
+## Exploratory Viz
+
+### Average MCV per Age Year
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  ggplot(aes(x = avg_mcv)) +
+  geom_density(fill = "blue", alpha = 0.5) +  
+  labs(title = "Density Plot for MCV",
+       x = "Average MCV",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, avg_mcv) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_mcv)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0, site != 'national') %>%
+  group_by(site, age_year, avg_mcv) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_mcv)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year',
+       subtitle = 'Exclude National')
+
+```
+
+### Average ANC per Age Year
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  ggplot(aes(x = avg_anc)) +
+  geom_density(fill = "blue", alpha = 0.5) +  
+  labs(title = "Density Plot for ANC",
+       x = "Average ANC",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, avg_anc) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_anc)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0, site != 'national') %>%
+  group_by(site, age_year, avg_anc) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_anc)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year',
+       subtitle = 'Exclude National')
+
+```
+
+### Average Hemoglobin per Age Year
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  ggplot(aes(x = avg_hgb)) +
+  geom_density(fill = "blue", alpha = 0.5) +  
+  labs(title = "Density Plot for Hgb",
+       x = "Average Hgb",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, avg_hgb) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_hgb)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0, site != 'national') %>%
+  group_by(site, age_year, avg_hgb) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_hgb)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year',
+       subtitle = 'Exclude National')
+
+```
+
+### Total ED Days per Age Year
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  #filter(ed_days_ageyear < 20) %>%
+  ggplot(aes(x = ed_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  labs(title = "Density Plot for ED Days",
+       x = "ED Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  filter(ed_days_ageyear < 20) %>%
+  ggplot(aes(x = ed_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  labs(title = "Density Plot for ED Days (Drop Extremes)",
+       x = "ED Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, ed_days_ageyear) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(ed_days_ageyear)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0, site != 'national') %>%
+  group_by(site, age_year, ed_days_ageyear) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(ed_days_ageyear)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year',
+       subtitle = 'Exclude National')
+
+```
+
+### Total Hospitalized Days per Age Year
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  filter(hosp_days_ageyear >= 0) %>%
+  ggplot(aes(x = hosp_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  labs(title = "Density Plot for IP Days",
+       x = "IP Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+
+results_tbl('did_primary_vars') %>%
+  filter(hosp_days_ageyear >= 0 & hosp_days_ageyear < 50) %>%
+  ggplot(aes(x = hosp_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  labs(title = "Density Plot for IP Days (Drop Extremes)",
+       x = "IP Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, hosp_days_ageyear) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(hosp_days_ageyear)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- results_tbl('did_primary_vars') %>%
+  filter(age_year >= 0, site != 'national') %>%
+  group_by(site, age_year, hosp_days_ageyear) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(hosp_days_ageyear)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  geom_label(data = my_dat %>%
+               mutate(prop_na = sum(prop_na)) %>%
+               distinct(age_year, tot_pt, prop_na),
+             aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year',
+       subtitle = 'Exclude National')
+
+```
+
+## DID Analysis
+```{r}
+# Create a modified data frame with treatment variables for CS estimation
+df_CS <- results_tbl('did_primary_vars') %>% 
+  collect() %>%
+  group_by(site, person_id) %>%
+  mutate(age_year_first_hu = case_when(any(treated_50 == 1) ~ age_year_first_hu + 1,
+                                       TRUE ~ NA_integer_)) %>%
+  ungroup() %>%
+  mutate(
+    first_HU_age_CS = if_else(is.na(age_year_first_hu), 0, age_year_first_hu), 
+    first_HU_calendar_year_CS = if_else(is.na(age_year_first_hu), 0, calendar_year_first_hu)
+  )
+```
+
+### ED Days
+
+#### All Patients, Do Not Adjust for Treatment
+
+:::{.panel-tabset}
+
+# Unadjusted Age-Year
+
+```{r}
+
+#### ED days
+df_ed <- df_CS %>%
+  mutate(ed_days_ageyear = ifelse(is.na(ed_days_ageyear), 0, ed_days_ageyear)) %>%
+  filter(age_year >= 0)
+
+did1_attgt <- att_gt(
+  yname = "ed_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in ED visits per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+# Adjusted Age-Year
+
+```{r}
+
+#### ED days
+df_ed <- df_CS %>%
+  mutate(ed_days_ageyear = ifelse(is.na(ed_days_ageyear), 0, ed_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "ed_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in ED visits per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+:::
+
+#### All Patients, Adjust for Treatment
+
+For patients who meet the 50% criteria at least once, remove any years after initial treatment where they do not meet treatment criteria.
+
+:::{.panel-tabset}
+
+# Unadjusted Age-Year
+
+```{r}
+
+#### ED days
+df_ed <- df_CS %>%
+  mutate(ed_days_ageyear = ifelse(is.na(ed_days_ageyear), 0, ed_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  #mutate(age_year = age_year + 1) %>%
+  group_by(person_id) %>%
+  mutate(drop = ifelse(any(treated_50 == 1) & 
+                         age_year > first_HU_age_CS & treated_50 == 0, TRUE, FALSE)) %>%
+  filter(!drop) %>% 
+  select(person_id, age_year, first_HU_age_CS, first_HU_calendar_year_CS, ed_days_ageyear)
+
+did1_attgt <- att_gt(
+  yname = "ed_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients (only treated years)",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in ED visits per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+# Adjusted Age-Year
+
+```{r}
+
+#### ED days
+df_ed <- df_CS %>%
+  mutate(ed_days_ageyear = ifelse(is.na(ed_days_ageyear), 0, ed_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1) %>%
+  group_by(person_id) %>%
+  mutate(drop = ifelse(any(treated_50 == 1) & 
+                         age_year > first_HU_age_CS & treated_50 == 0, TRUE, FALSE)) %>%
+  filter(!drop) %>% 
+  select(person_id, age_year, first_HU_age_CS, first_HU_calendar_year_CS, ed_days_ageyear)
+
+did1_attgt <- att_gt(
+  yname = "ed_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients (only treated years)",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in ED visits per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+:::
+
+
+### Hospitalization Days
+
+#### All Patients, Do Not Adjust for Treatment
+
+:::{.panel-tabset}
+
+# Unadjusted Age-Year
+
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in Hospitalization days per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+# Adjusted Age-Year
+
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in Hospitalization days per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+:::
+
+#### All Patients, Adjust for Treatment
+
+For patients who meet the 50% criteria at least once, remove any years after initial treatment where they do not meet treatment criteria.
+
+:::{.panel-tabset}
+
+# Unadjusted Age-Year
+
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  #mutate(age_year = age_year + 1) %>%
+  group_by(person_id) %>%
+  mutate(drop = ifelse(any(treated_50 == 1) & 
+                         age_year > first_HU_age_CS & treated_50 == 0, TRUE, FALSE)) %>%
+  filter(!drop) %>% 
+  select(person_id, age_year, first_HU_age_CS, first_HU_calendar_year_CS, hosp_days_ageyear)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients (only treated years)",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in Hospitalization days per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+# Adjusted Age-Year
+
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1) %>%
+  group_by(person_id) %>%
+  mutate(drop = ifelse(any(treated_50 == 1) & 
+                         age_year > first_HU_age_CS & treated_50 == 0, TRUE, FALSE)) %>%
+  filter(!drop) %>% 
+  select(person_id, age_year, first_HU_age_CS, first_HU_calendar_year_CS, hosp_days_ageyear)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "reg", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+agg.es <- aggte(did1_attgt, type = "dynamic", na.rm = TRUE)
+
+model_name <- "all patients"
+outcome <- agg.es$DIDparams$yname
+ATT <- agg.es$overall.att
+standard_error <- agg.es$overall.se
+CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+tibble(model_name = model_name,
+       outcome = outcome,
+       ATT = ATT,
+       standard_error = standard_error,
+       CI_low = CI_low,
+       CI_high = CI_high) %>%
+  gt::gt() %>%
+  gt::tab_header('Overall Summary')
+
+coef.cs <- tidy(agg.es)
+coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+# Custom event study plot (ED_days_per_year)
+ggplot(coef.cs %>% filter(event.time > -6 & event.time < 16), 
+       aes(x = event.time, y = estimate, color = period)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+  geom_hline(yintercept = 0, linetype = "dotted") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+  scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+  labs(title = "Event Study Estimates", 
+       subtitle = "All patients (only treated years)",
+       x = "Treatment year (0 = hydroxyurea initiation)", 
+       y = "Change in Hospitalization days per year", 
+       color = "Period") + 
+  theme_classic()
+
+```
+
+:::
