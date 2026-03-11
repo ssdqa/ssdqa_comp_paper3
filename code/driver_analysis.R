@@ -205,10 +205,10 @@ mean_anc <- cdm_tbl('measurement_labs') %>%
 
 ### combine
 ay_avgs <- ed_per_ageyear %>%
-  left_join(hosp_per_ageyear) %>%
-  left_join(mean_mcv) %>%
-  left_join(mean_anc) %>%
-  left_join(mean_hgb) %>%
+  full_join(hosp_per_ageyear) %>%
+  full_join(mean_mcv) %>%
+  full_join(mean_anc) %>%
+  full_join(mean_hgb) %>%
   compute_new('ay_avgs')
 
 
@@ -217,7 +217,7 @@ ay_avgs <- ed_per_ageyear %>%
 did_primary_vars <- results_tbl('final_cohort_censored') %>%
   select(site, person_id, first_sca_dx, last_visit_date, censorship_reason, end_date) %>%
   left_join(did_treatment_labels) %>%
-  left_join(results_tbl('ay_avgs')) %>%
+  full_join(results_tbl('ay_avgs')) %>%
   left_join(first_hu) %>%
   left_join(results_tbl("bl_labs") %>% 
               select(site, person_id, baseline_hgb, baseline_anc, baseline_mcv))
