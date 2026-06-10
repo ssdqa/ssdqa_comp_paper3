@@ -18,46 +18,103 @@ library(squba)
 
 # Source file with wrapper function
 source(file.path('setup', 'argos_wrapper.R'))
+source(Sys.getenv('PEDSNET_TRINO_HTTR'))
+
+postgres_session <- argos$new('postgres_session')$init_session(db_src = srcr::srcr(Sys.getenv('PEDSNET_BASE_57')),
+                                                               base_dir = getwd(),
+                                                               cdm_schema = 'dcc_pedsnet',
+                                                               results_schema = 'ssdqa_paper3',
+                                                               vocabulary_schema = 'vocabulary',
+                                                               cdm = 'pedsnet',
+                                                               table_case = 'lower',
+                                                               results_name_tag = '')
+
+trino_session <- argos$new('trino_session')$init_session(db_src = srcr::srcr(Sys.getenv('PEDSNET_TRINO_CONFIG')),
+                                                         base_dir = getwd(),
+                                                         cdm_schema = 'ssdqa_paper3',
+                                                         results_schema = 'ssdqa_paper3',
+                                                         vocabulary_schema = 'v57_vocabulary',
+                                                         cdm = 'pedsnet',
+                                                         table_case = 'lower',
+                                                         table_names = list(
+                                                           'condition_occurrence' = 'cdm_condition_occurrence',
+                                                           'procedure_occurrence' = 'cdm_procedure_occurrence',
+                                                           'visit_occurrence' = 'cdm_visit_occurrence',
+                                                           'provider' = 'cdm_provider_remap',
+                                                           'care_site' = 'cdm_care_site_remap',
+                                                           'measurement_labs' = 'cdm_measurement_labs_remap',
+                                                           'measurement_vitals' = 'cdm_measurement_vitals',
+                                                           'measurement_anthro' = 'cdm_measurement_anthro',
+                                                           'drug_exposure' = 'cdm_drug_exposure_remap',
+                                                           'person' = 'cdm_person'
+                                                         ),
+                                                         retain_intermediates = TRUE,
+                                                         results_name_tag = '')
+
+trino_session_nodq <- argos$new('trino_session_nodq')$init_session(db_src = srcr::srcr(Sys.getenv('PEDSNET_TRINO_CONFIG')),
+                                                         base_dir = getwd(),
+                                                         cdm_schema = 'ssdqa_paper3',
+                                                         results_schema = 'ssdqa_paper3',
+                                                         vocabulary_schema = 'v57_vocabulary',
+                                                         cdm = 'pedsnet',
+                                                         table_case = 'lower',
+                                                         table_names = list(
+                                                           'condition_occurrence' = 'cdm_condition_occurrence',
+                                                           'procedure_occurrence' = 'cdm_procedure_occurrence',
+                                                           'visit_occurrence' = 'cdm_visit_occurrence',
+                                                           'provider' = 'cdm_provider',
+                                                           'care_site' = 'cdm_care_site',
+                                                           'measurement_labs' = 'cdm_measurement_labs',
+                                                           'measurement_vitals' = 'cdm_measurement_vitals',
+                                                           'measurement_anthro' = 'cdm_measurement_anthro',
+                                                           'drug_exposure' = 'cdm_drug_exposure',
+                                                           'person' = 'cdm_person'
+                                                         ),
+                                                         retain_intermediates = TRUE,
+                                                         results_name_tag = '')
+
 
 # Establish connection to database
-postgres_session <- initialize_session(session_name = 'ssdqa_postgres',
-                                       db_conn = Sys.getenv('PEDSNET_BASE_57'),
-                                       is_json = TRUE,
-                                       cdm_schema = 'dcc_pedsnet',
-                                       results_schema = 'ssdqa_paper3', 
-                                       vocabulary_schema = 'vocabulary',
-                                       retain_intermediates = FALSE,
-                                       db_trace = TRUE,
-                                       results_tag = '')
-
-trino_session <- initialize_session(session_name = 'ssdqa_trino',
-                                    db_conn = Sys.getenv('PEDSNET_TRINO_CONFIG'),
-                                    is_json = TRUE,
-                                    cdm_schema = 'pedsnet_dcc_v57',
-                                    results_schema = 'ssdqa_paper3', 
-                                    vocabulary_schema = 'v57_vocabulary',
-                                    retain_intermediates = TRUE,
-                                    db_trace = TRUE,
-                                    results_tag = '')
-
+# postgres_session <- initialize_session(session_name = 'ssdqa_postgres',
+#                                        db_conn = Sys.getenv('PEDSNET_BASE_57'),
+#                                        is_json = TRUE,
+#                                        cdm_schema = 'dcc_pedsnet',
+#                                        results_schema = 'ssdqa_paper3',
+#                                        vocabulary_schema = 'vocabulary',
+#                                        retain_intermediates = FALSE,
+#                                        db_trace = TRUE,
+#                                        results_tag = '')
+# 
+# trino_session <- initialize_session(session_name = 'ssdqa_trino',
+#                                     db_conn = Sys.getenv('PEDSNET_TRINO_CONFIG'),
+#                                     is_json = TRUE,
+#                                     cdm_schema = 'pedsnet_dcc_v57',
+#                                     results_schema = 'ssdqa_paper3',
+#                                     vocabulary_schema = 'v59_vocabulary',
+#                                     retain_intermediates = TRUE,
+#                                     db_trace = TRUE,
+#                                     results_tag = '')
+# 
 set_argos_default(trino_session)
+# 
+# config('subdirs', list('specs' = 'specs'))
 
-config('cdm_schema', 'ssdqa_paper3')
-config('table_names', list(
-  'condition_occurrence' = 'cdm_condition_occurrence',
-  'procedure_occurrence' = 'cdm_procedure_occurrence',
-  'visit_occurrence' = 'cdm_visit_occurrence',
-  'provider' = 'cdm_provider_remap',
-  'care_site' = 'cdm_care_site_remap',
-  'measurement_labs' = 'cdm_measurement_labs_remap',
-  'measurement_vitals' = 'cdm_measurement_vitals',
-  'measurement_anthro' = 'cdm_measurement_anthro',
-  'drug_exposure' = 'cdm_drug_exposure',
-  'person' = 'cdm_person'
-))
+#config('cdm_schema', 'ssdqa_paper3')
+# config('table_names', list(
+#   'condition_occurrence' = 'cdm_condition_occurrence',
+#   'procedure_occurrence' = 'cdm_procedure_occurrence',
+#   'visit_occurrence' = 'cdm_visit_occurrence',
+#   'provider' = 'cdm_provider_remap',
+#   'care_site' = 'cdm_care_site_remap',
+#   'measurement_labs' = 'cdm_measurement_labs_remap',
+#   'measurement_vitals' = 'cdm_measurement_vitals',
+#   'measurement_anthro' = 'cdm_measurement_anthro',
+#   'drug_exposure' = 'cdm_drug_exposure_remap',
+#   'person' = 'cdm_person'
+# ))
 
 # Source cohort_* files
-for (fn in list.files('code', 'cohorts|cohort_.+\\.R', full.names = TRUE)){
+for (fn in list.files('code', '^cohorts|^cohort_.+\\.R', full.names = TRUE)){
   source(fn)
   }
 rm(fn)

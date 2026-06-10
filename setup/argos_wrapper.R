@@ -50,7 +50,7 @@ initialize_session <- function(session_name,
                                retain_intermediates = FALSE,
                                db_trace = TRUE){
   
-  argos$public_methods$load_codeset <- function(name, col_types = 'iccc', table_name = name,
+  argos$public_methods$load_codeset <- function(name, col_types = NULL, table_name = name,
                                                 indexes = list('concept_id'), full_path = FALSE,
                                                 db = self$config('db_src'),
                                                 .chunk_size = 5000) {
@@ -62,7 +62,7 @@ initialize_session <- function(session_name,
     }
     codes <-
       self$copy_to_new(db,
-                       self$read_codeset(name, col_types = col_types,
+                       self$read_codeset(name, col_types = NULL,
                                          full_path = full_path),
                        name = table_name,
                        overwrite = TRUE,
@@ -75,6 +75,47 @@ initialize_session <- function(session_name,
     }
     
     codes
+  }
+  
+  argos$public_methods$copy_to_new <- function (dest = config("db_src"), df, name = deparse(substitute(df)), 
+                                                overwrite = TRUE, temporary = !config("retain_intermediates"), 
+                                                ..., .chunk_size = 5000) 
+  {
+    name <- self$intermed_name(name, temporary = temporary)
+    if (self$config("db_trace")) {
+      message(" -> copy_to")
+      start <- Sys.time()
+      message(start)
+      message("Data: ", deparse(substitute(df)))
+      message("Table name: ", base::ifelse(packageVersion("dbplyr") < 
+                                             "2.0.0", dbplyr::as.sql(name), dbplyr::as.sql(name, 
+                                                                                           dbi_con(dest))), " (temp: ", temporary, ")")
+      message("Data elements: ", paste(tbl_vars(df), collapse = ","))
+      message("Rows: ", NROW(df))
+    }
+    if (overwrite && self$db_exists_table(dest, name)) {
+      self$db_remove_table(dest, name)
+    }
+    dfsize <- tally(ungroup(df)) %>% pull(n)
+    if (is.na(.chunk_size)) 
+      .chunk_size <- dfsize
+    cstart <- 1
+    if (.chunk_size < dfsize) 
+      cli::cli_progress_bar("Writing data", total = 100, format = "Writing data {cli::pb_bar} {cli::pb_percent}")
+    while (cstart < dfsize || cstart == 1) {
+      cend <- min(cstart + .chunk_size, dfsize)
+      rslt <- dplyr::copy_to(dest = dest, df = slice(ungroup(df), 
+                                                     cstart:cend), name = name, append = TRUE, overwrite = FALSE, 
+                             temporary = temporary, ...)
+      if (.chunk_size < dfsize) 
+        cli::cli_progress_update(set = 100L * cend/dfsize)
+      cstart <- cend + 1L
+    }
+    if (self$config("db_trace")) {
+      end <- Sys.time()
+      message(end, " ==> ", format(end - start))
+    }
+    rslt
   }
   
   assignInNamespace('find_fact_spec_conc_omop',

@@ -80,11 +80,12 @@ ssc_outcomes <- read_codeset('rx_hydroxyurea') %>%
           select(-c(domain_name, concept_class)) %>%
           rename('vocabulary_id' = 'vocabulary_name') %>%
           mutate(variable = 'MCV labs',
-                 domain = 'labs')) #%>%
-  # union(read_codeset('rx_opioids') %>%
-  #         rename('cluster' = 'ingredient') %>%
-  #         mutate(variable = 'Opioids',
-  #                domain = 'drugs'))
+                 domain = 'labs')) %>%
+  union(read_codeset('lab_serum_hemoglobin') %>%
+          select(-pcornet_vocabulary_id) %>%
+          mutate(variable = 'Hemoglobin',
+                 domain = 'labs',
+                 cluster = 'hemoglobin'))
 
 readr::write_csv(ssc_outcomes, 'specs/ssc_outcomes.csv')
 
@@ -107,27 +108,30 @@ qvd_input_r4 <- tibble(value_name = c('ANC (per microliter)', 'ANC (thousand per
                                       'ANC (no unit)', 'ANC (percent)', 'ANC (microliter)',
                                       'ANC (cells per microliter)', 'ANC (thousand per cubic millimeter)',
                                       'ANC (per cubic millimeter)', 'ANC (billion per liter)', 'MCV (femtoliter)',
-                                      'MCV (no unit)', 'SCD Quant (percent)', 'SCD Quant (no unit)'),
+                                      'MCV (no unit)', 'SCD Quant (percent)', 'SCD Quant (no unit)',
+                                      'HGB (g/dL)', 'HGB (no unit)'),
                        domain_tbl = c('measurement_labs','measurement_labs','measurement_labs','measurement_labs','measurement_labs',
                                       'measurement_labs','measurement_labs','measurement_labs','measurement_labs','measurement_labs',
-                                      'measurement_labs','measurement_labs','measurement_labs'),
+                                      'measurement_labs','measurement_labs','measurement_labs','measurement_labs','measurement_labs'),
                        value_field = c('value_as_number','value_as_number','value_as_number','value_as_number',
                                        'value_as_number','value_as_number','value_as_number','value_as_number',
-                                       'value_as_number','value_as_number','value_as_number','value_as_number','value_as_number'),
+                                       'value_as_number','value_as_number','value_as_number','value_as_number','value_as_number',
+                                       'value_as_number','value_as_number'),
                        date_field = c('measurement_date','measurement_date','measurement_date','measurement_date','measurement_date',
                                       'measurement_date','measurement_date','measurement_date','measurement_date','measurement_date',
-                                      'measurement_date','measurement_date','measurement_date'),
+                                      'measurement_date','measurement_date','measurement_date','measurement_date','measurement_date'),
                        concept_field = c('measurement_concept_id','measurement_concept_id','measurement_concept_id','measurement_concept_id',
                                          'measurement_concept_id','measurement_concept_id','measurement_concept_id','measurement_concept_id',
                                          'measurement_concept_id','measurement_concept_id','measurement_concept_id', 'measurement_concept_id',
-                                         'measurement_concept_id'),
+                                         'measurement_concept_id','measurement_concept_id','measurement_concept_id'),
                        codeset_name = c('lab_anc','lab_anc','lab_anc','lab_anc','lab_anc','lab_anc','lab_anc','lab_anc',
-                                        'lab_anc', 'lab_mcv', 'lab_mcv', 'lab_scd', 'lab_scd'),
+                                        'lab_anc', 'lab_mcv', 'lab_mcv', 'lab_scd', 'lab_scd','lab_serum_hemoglobin',
+                                        'lab_serum_hemoglobin'),
                        filter_logic = c('unit_concept_id == 8647', 'unit_concept_id == 8848', 'unit_concept_id %in% c(0, 44814650)',
                                         'unit_concept_id == 8554', 'unit_concept_id == 9665', 'unit_concept_id == 8784',
                                         'unit_concept_id == 8961', 'unit_concept_id == 8785', 'unit_concept_id == 9444',
                                         'unit_concept_id == 8583', 'unit_concept_id %in% c(0, 44814650)', 'unit_concept_id == 8554',
-                                        'unit_concept_id %in% c(0, 44814650)'))
+                                        'unit_concept_id %in% c(0, 44814650)','unit_concept_id == 8713','unit_concept_id %in% c(0, 44814650)'))
 
 readr::write_csv(qvd_input_r4, 'specs/input_qvd_r4.csv')
 

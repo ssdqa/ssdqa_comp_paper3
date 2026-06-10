@@ -50,7 +50,8 @@ cdsts <- list(load_codeset('lab_anc'),
               load_codeset('lab_mcv'),
               load_codeset('lab_scd') %>% filter(subtyping == 'quant') %>% mutate(cluster = 'scd_quant'),
               load_codeset('lab_scd') %>% filter(subtyping == 'text') %>% mutate(cluster = 'scd_text'),
-              load_codeset('lab_scd') %>% filter(is.na(subtyping)) %>% mutate(cluster = 'scd_remapped'))
+              load_codeset('lab_scd') %>% filter(is.na(subtyping)) %>% mutate(cluster = 'scd_remapped'),
+              load_codeset('lab_serum_hemoglobin') %>% mutate(cluster = 'hemoglobin'))
 cvd_rslt <- list()
 j <- 1
 
@@ -62,8 +63,8 @@ for(i in cdsts){
                                   omop_or_pcornet = 'omop',
                                   multi_or_single_site = 'single',
                                   anomaly_or_exploratory = 'exploratory',
-                                  time = FALSE,
-                                  vocab_tbl = vocabulary_tbl('concept'))
+                                  time = FALSE)
+                                  #vocab_tbl = vocabulary_tbl('concept'))
   
   clust <- i %>% distinct(cluster) %>% pull()
   
@@ -73,7 +74,8 @@ for(i in cdsts){
 }
 
 cvd_ss_exp_cs_r4 <- purrr::reduce(.x = cvd_rslt,
-                                  .f = dplyr::union)
+                                  .f = dplyr::union) %>%
+  mutate(prop_concept = ct_concept / ct_denom)
 
 postgres_session$output_tbl(cvd_ss_exp_cs_r4, 'cvd_ss_exp_cs_r4')
 

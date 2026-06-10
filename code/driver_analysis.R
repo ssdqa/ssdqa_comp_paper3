@@ -131,7 +131,7 @@ ed_per_ageyear <- cdm_tbl('visit_occurrence') %>%
          visit_start_date <= end_date) %>%
   filter(visit_concept_id == 9203) %>%
   mutate(ed_days = date_diff('day', visit_start_date, visit_end_date),
-         ed_days2 = ed_days + 1L) %>%
+         ed_days = ed_days + 1L) %>%
   select(site, person_id, visit_start_date, visit_end_date, ed_days) %>%
   left_join(cdm_tbl('person') %>% select(person_id, birth_date)) %>%
   mutate(visit_age = date_diff('day', birth_date, visit_start_date),
@@ -139,6 +139,19 @@ ed_per_ageyear <- cdm_tbl('visit_occurrence') %>%
          age_year = as.numeric(age_year)) %>%
   group_by(site, person_id, age_year) %>%
   summarise(ed_days_ageyear = sum(ed_days))
+
+## ED Visits
+ed_per_ageyear2 <- cdm_tbl('visit_occurrence') %>%
+  inner_join(results_tbl('final_cohort_censored')) %>%
+  filter(visit_start_date >= first_sca_dx,
+         visit_start_date <= end_date) %>%
+  filter(visit_concept_id == 9203) %>%
+  left_join(cdm_tbl('person') %>% select(person_id, birth_date)) %>%
+  mutate(visit_age = date_diff('day', birth_date, visit_start_date),
+         age_year = floor(visit_age / 365.25),
+         age_year = as.numeric(age_year)) %>%
+  group_by(site, person_id, age_year) %>%
+  summarise(ed_vis_ageyear = n_distinct(visit_occurrence_id))
 
 
 ### hospitalization days per year
@@ -156,6 +169,19 @@ hosp_per_ageyear <- cdm_tbl('visit_occurrence') %>%
          age_year = as.numeric(age_year)) %>%
   group_by(site, person_id, age_year) %>%
   summarise(hosp_days_ageyear = sum(hosp_days))
+
+### hospitalization visits per year
+hosp_per_ageyear2 <- cdm_tbl('visit_occurrence') %>%
+  inner_join(results_tbl('final_cohort_censored')) %>%
+  filter(visit_start_date >= first_sca_dx,
+         visit_start_date <= end_date) %>%
+  filter(visit_concept_id %in% c(9201, 2000000088)) %>%
+  left_join(cdm_tbl('person') %>% select(person_id, birth_date)) %>%
+  mutate(visit_age = date_diff('day', birth_date, visit_start_date),
+         age_year = floor(visit_age / 365.25),
+         age_year = as.numeric(age_year)) %>%
+  group_by(site, person_id, age_year) %>%
+  summarise(hosp_vis_ageyear = n_distinct(visit_occurrence_id))
 
 ### average MCV (exclude IP & ED)
 mean_mcv <- cdm_tbl('measurement_labs') %>%
@@ -205,7 +231,9 @@ mean_anc <- cdm_tbl('measurement_labs') %>%
 
 ### combine
 ay_avgs <- ed_per_ageyear %>%
+  full_join(ed_per_ageyear2) %>%
   full_join(hosp_per_ageyear) %>%
+  full_join(hosp_per_ageyear2) %>%
   full_join(mean_mcv) %>%
   full_join(mean_anc) %>%
   full_join(mean_hgb) %>%

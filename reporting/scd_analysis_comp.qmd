@@ -1,0 +1,1173 @@
+---
+title: "DID Analysis Comparison: Pre & Post DQ Intervention"
+format: 
+  html:
+    embed-resources: true
+    html-table-processing: none
+    toc: true
+---
+
+```{r setup, include=FALSE}
+
+library(squba.gen)
+library(squba)
+library(gtsummary)
+library(gt)
+library(patchwork)
+library(ggiraph)
+library(ggplot2)
+library(did)
+
+setwd(here::here())
+source('setup/setup.R')
+
+
+get_results <- function(dat){
+  
+  results_tbl(dat) %>% collect()
+}
+
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+
+set_argos_default(trino_session)
+
+combo_tbl <- results_tbl('did_primary_vars') %>%
+  mutate(cohort = 'SQUBA') %>%
+  union(results_tbl('did_primary_vars_nodq') %>% mutate(cohort = 'Non-SQUBA')) %>%
+  collect()
+
+
+did_plts <- function(did_dat,
+                     ylab,
+                     model_name = 'All Patients'){
+  
+  agg.es <- aggte(did_dat, type = "dynamic", na.rm = TRUE)
+
+  model_name <- model_name
+  outcome <- agg.es$DIDparams$yname
+  ATT <- agg.es$overall.att
+  standard_error <- agg.es$overall.se
+  CI_low <- ATT - qt(0.975, df = Inf) * standard_error
+  CI_high <- ATT + qt(0.975, df = Inf) * standard_error
+
+  tb <- tibble(model_name = model_name,
+         outcome = outcome,
+         ATT = ATT,
+         standard_error = standard_error,
+         CI_low = CI_low,
+         CI_high = CI_high) %>%
+    gt::gt() %>%
+    gt::tab_header('Overall Summary')
+
+  coef.cs <- tidy(agg.es)
+  coef.cs$period <- ifelse(coef.cs$event.time < 0, "Pre-treatment", "Post-treatment")
+
+  # Custom event study plot (ED_days_per_year)
+  plt <- ggplot(coef.cs %>% filter(event.time > -6 & event.time < 11), 
+         aes(x = event.time, y = estimate, color = period)) + 
+    geom_point() + 
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2) + 
+    geom_hline(yintercept = 0, linetype = "dotted") + 
+    geom_vline(xintercept = 0, linetype = "dashed", color = "red") + 
+    scale_color_manual(values = c("Pre-treatment" = "darkred", "Post-treatment" = "darkblue")) + 
+    labs(title = "Event Study Estimates", 
+         subtitle = model_name,
+         x = "Treatment year (0 = hydroxyurea initiation)", 
+         y = ylab, 
+         color = "Period") + 
+    theme_classic()
+  
+  opt <- list(tb, plt)
+  
+  return(opt)
+}
+
+```
+
+## Cohort Comparison
+```{r, fig.height=8}
+
+plt <- ssc_output(process_output = get_results('ssc_ms_exp_cs_dqcomp'),
+           alt_cohort_filter = c('Non-SQUBA', 'SQUBA Treated Adherent'))
+
+plt[[1]]$data <- plt[[1]]$data %>% mutate(cohort_id = case_when(cohort_id == 'Base Cohort' ~ 'SQUBA', grepl('Non-SQUBA', cohort_id) ~ 'Non-SQUBA', TRUE ~ 'SQUBA Treated \nAdherent'),
+                                          cohort_id = factor(cohort_id, levels = c('Non-SQUBA', 'SQUBA', 'SQUBA Treated \nAdherent')))
+plt[[1]] <- plt[[1]] + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+make_interactive_squba(plt[[1]])
+plt[[2]]$data <- plt[[2]]$data %>% mutate(cohort_id = case_when(cohort_id == 'Base Cohort' ~ 'SQUBA', grepl('Non-SQUBA', cohort_id) ~ 'Non-SQUBA', TRUE ~ 'SQUBA Treated \nAdherent'),
+                                          cohort_id = factor(cohort_id, levels = c('Non-SQUBA', 'SQUBA', 'SQUBA Treated \nAdherent')))
+plt[[2]] <- plt[[2]] + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5))
+make_interactive_squba(plt[[2]])
+
+```
+
+### Tabular SSC Output
+:::{.panel-tabset}
+# SQUBA Cohort
+```{r}
+
+get_results('ssc_ms_exp_cs_dqcomp') %>%
+  filter(cohort_id == 'base_cohort') %>%
+  select(site, cohort_characteristic, fact_group, fact_summary, cohort_total_pt) %>%
+  mutate(site_lab = paste0(site, '\n(N = ', cohort_total_pt, ')')) %>%
+  select(-c(site, cohort_total_pt)) %>% 
+  pivot_wider(names_from = site_lab,
+              values_from = fact_summary) %>%
+  gt(groupname_col = 'fact_group') %>%
+  fmt_number() %>%
+  fmt_percent(rows = grepl('prop', cohort_characteristic)) %>%
+  opt_stylize()
+  
+
+```
+
+# Non-SQUBA Cohort
+```{r}
+
+get_results('ssc_ms_exp_cs_dqcomp') %>%
+  filter(grepl('Non-SQUBA', cohort_id)) %>%
+  select(site, cohort_characteristic, fact_group, fact_summary, cohort_total_pt) %>%
+  mutate(site_lab = paste0(site, '\n(N = ', cohort_total_pt, ')')) %>%
+  select(-c(site, cohort_total_pt)) %>% 
+  pivot_wider(names_from = site_lab,
+              values_from = fact_summary) %>%
+  gt(groupname_col = 'fact_group') %>%
+  fmt_number() %>%
+  fmt_percent(rows = grepl('prop', cohort_characteristic)) %>%
+  opt_stylize()
+  
+
+```
+
+# SQUBA Treated Adherent
+```{r}
+
+get_results('ssc_ms_exp_cs_dqcomp') %>%
+  filter(grepl('Adherent', cohort_id)) %>%
+  select(site, cohort_characteristic, fact_group, fact_summary, cohort_total_pt) %>%
+  mutate(site_lab = paste0(site, '\n(N = ', cohort_total_pt, ')')) %>%
+  select(-c(site, cohort_total_pt)) %>% 
+  pivot_wider(names_from = site_lab,
+              values_from = fact_summary) %>%
+  gt(groupname_col = 'fact_group') %>%
+  fmt_number() %>%
+  fmt_percent(rows = grepl('prop', cohort_characteristic)) %>%
+  opt_stylize()
+  
+
+```
+:::
+
+## Exploratory Viz
+
+### Average MCV per Age Year
+```{r}
+
+combo_tbl %>%
+  ggplot(aes(x = avg_mcv, fill = cohort)) +
+  geom_density(alpha = 0.5) + 
+  labs(title = "Density Plot for MCV",
+       x = "Average MCV",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- combo_tbl %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, avg_mcv, cohort) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_mcv)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  facet_wrap(~cohort) +
+  # geom_label(data = my_dat %>%
+  #              group_by(cohort) %>%
+  #              mutate(prop_na = sum(prop_na)) %>%
+  #              distinct(age_year, tot_pt, prop_na),
+  #            aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+### Average ANC per Age Year
+```{r}
+
+combo_tbl %>%
+  ggplot(aes(x = avg_anc, fill = cohort)) +
+  geom_density(alpha = 0.5) + 
+  labs(title = "Density Plot for ANC",
+       x = "Average ANC",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- combo_tbl %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, avg_anc, cohort) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_anc)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  facet_wrap(~cohort) +
+  # geom_label(data = my_dat %>%
+  #              mutate(prop_na = sum(prop_na)) %>%
+  #              distinct(age_year, tot_pt, prop_na),
+  #            aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+### Average Hemoglobin per Age Year
+```{r}
+
+combo_tbl %>%
+  ggplot(aes(x = avg_hgb, fill = cohort)) +
+  geom_density(alpha = 0.5) +  
+  labs(title = "Density Plot for Hgb",
+       x = "Average Hgb",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- combo_tbl %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, avg_hgb, cohort) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(avg_hgb)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  facet_wrap(~cohort) +
+  # geom_label(data = my_dat %>%
+  #              mutate(prop_na = sum(prop_na)) %>%
+  #              distinct(age_year, tot_pt, prop_na),
+  #            aes(label = tot_pt), size = 2) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+### Total ED Visits per Age Year
+```{r}
+
+combo_tbl %>%
+  #filter(ed_days_ageyear < 20) %>%
+  ggplot(aes(x = ed_vis_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  facet_wrap(~cohort) +
+  labs(title = "Density Plot for ED Days",
+       x = "ED Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+
+combo_tbl %>%
+  filter(ed_days_ageyear < 20) %>%
+  ggplot(aes(x = ed_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  facet_wrap(~cohort) +
+  labs(title = "Density Plot for ED Days (Drop Extremes)",
+       x = "ED Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- combo_tbl %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, ed_days_ageyear, cohort) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(ed_days_ageyear)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  # geom_label(data = my_dat %>%
+  #              mutate(prop_na = sum(prop_na)) %>%
+  #              distinct(age_year, tot_pt, prop_na),
+  #            aes(label = tot_pt), size = 2) +
+  facet_wrap(~cohort) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+### Total Hospitalized Days per Age Year
+```{r}
+
+combo_tbl %>%
+  filter(hosp_days_ageyear >= 0) %>%
+  ggplot(aes(x = hosp_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  facet_wrap(~cohort) +
+  labs(title = "Density Plot for IP Days",
+       x = "IP Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r}
+
+combo_tbl %>%
+  filter(hosp_days_ageyear >= 0 & hosp_days_ageyear < 50) %>%
+  ggplot(aes(x = hosp_days_ageyear)) +
+  geom_histogram(fill = "blue", alpha = 0.5,
+                 binwidth = 1) +  
+  facet_wrap(~cohort) +
+  labs(title = "Density Plot for IP Days (Drop Extremes)",
+       x = "IP Days",
+       y = "Density") +
+  theme_minimal()
+
+```
+
+```{r, fig.width=8}
+
+my_dat <- combo_tbl %>%
+  filter(age_year >= 0) %>%
+  group_by(site, age_year, hosp_days_ageyear, cohort) %>%
+  summarise(npt = n_distinct(person_id)) %>%
+  group_by(age_year) %>%
+  mutate(tot_pt = sum(npt)) %>%
+  filter(is.na(hosp_days_ageyear)) %>%
+  mutate(prop_na = as.numeric(npt) / as.numeric(tot_pt)) 
+
+my_dat %>%
+  ggplot(aes(x = age_year, y = prop_na)) +
+  geom_col(aes(fill = site)) +
+  # geom_label(data = my_dat %>%
+  #              mutate(prop_na = sum(prop_na)) %>%
+  #              distinct(age_year, tot_pt, prop_na),
+  #            aes(label = tot_pt), size = 2) +
+  facet_wrap(~cohort) +
+  theme_minimal() +
+  labs(title = 'Patients Missing Measurements per Age Year')
+
+```
+
+### Missingness by Lab
+#### SQUBA Cohort
+```{r}
+
+my_dat <- combo_tbl %>%
+  filter(age_year >= 0) %>%
+  collect() %>%
+  mutate(missing_mcv = ifelse(is.na(avg_mcv), 'mcv', NA),
+         missing_hgb = ifelse(is.na(avg_hgb), 'hgb', NA),
+         missing_anc = ifelse(is.na(avg_anc), 'anc', NA),
+         missing_labs = paste(missing_mcv, missing_anc, 
+                              missing_hgb),
+         missing_labs = str_replace_all(missing_labs, 'NA', ''),
+         missing_labs = trimws(missing_labs),
+         missing_labs = ifelse(missing_labs == '', 'none', 
+                               missing_labs)) %>%
+  group_by(site, age_year, missing_labs, cohort) %>%
+  summarise(n_pt = n_distinct(person_id)) %>%
+  group_by(site, age_year, cohort) %>%
+  mutate(tot_pt = sum(n_pt),
+         prop_pt = n_pt / tot_pt) 
+
+
+plt <- my_dat %>%
+  filter(cohort == 'SQUBA') %>%
+  ggplot(aes(x = age_year, y = prop_pt, color = missing_labs)) +
+  geom_line() +
+  facet_wrap(~site) +
+  theme_minimal() +
+  labs(y = 'Prop. Patients',
+       x = 'Age Year',
+       color = 'Missing Lab(s)')
+
+plotly::ggplotly(plt)
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+plt <- my_dat %>%
+  filter(cohort != 'SQUBA') %>%
+  ggplot(aes(x = age_year, y = prop_pt, color = missing_labs)) +
+  geom_line() +
+  facet_wrap(~site) +
+  theme_minimal() +
+  labs(y = 'Prop. Patients',
+       x = 'Age Year',
+       color = 'Missing Lab(s)')
+
+plotly::ggplotly(plt)
+
+```
+
+## DID Analysis
+```{r}
+# Create a modified data frame with treatment variables for CS estimation
+df_CS <- results_tbl('did_primary_vars') %>% 
+  collect() %>%
+  group_by(site, person_id) %>%
+  mutate(age_year_first_hu = case_when(any(treated_50 == 1) ~ age_year_first_hu + 1,
+                                       TRUE ~ NA_integer_)) %>%
+  ungroup() %>%
+  mutate(
+    first_HU_age_CS = if_else(is.na(age_year_first_hu), 0, age_year_first_hu), 
+    first_HU_calendar_year_CS = if_else(is.na(age_year_first_hu), 0, calendar_year_first_hu)
+  )
+
+df_CS_nodq <- results_tbl('did_primary_vars_nodq') %>% 
+  collect() %>%
+  group_by(site, person_id) %>%
+  mutate(age_year_first_hu = case_when(any(treated_50 == 1) ~ age_year_first_hu + 1,
+                                       TRUE ~ NA_integer_)) %>%
+  ungroup() %>%
+  mutate(
+    first_HU_age_CS = if_else(is.na(age_year_first_hu), 0, age_year_first_hu), 
+    first_HU_calendar_year_CS = if_else(is.na(age_year_first_hu), 0, calendar_year_first_hu)
+  )
+```
+
+### ED Visits
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_ed <- df_CS %>%
+  mutate(ed_vis_ageyear = ifelse(is.na(ed_vis_ageyear), 0, ed_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "ed_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in ED visits per year')
+plts[[1]]
+plts[[2]] + ylim(-2, 0.75)
+
+ggsave('../results/figure2b_squba_ed.png',
+       plts[[2]] + 
+         ylim(-2, 0.75) + 
+         ggtitle('DFE Cohort') +
+         theme(legend.position = 'bottom',
+               #plot.title = element_blank(),
+               plot.subtitle = element_blank(),
+               text = element_text(size = 12)),
+       height = 7,
+       width = 7,
+       dpi = 300)
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_ed <- df_CS_nodq %>%
+  mutate(ed_vis_ageyear = ifelse(is.na(ed_vis_ageyear), 0, ed_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "ed_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in ED visits per year')
+plts[[1]]
+plts[[2]] + ylim(-2, 0.75)
+
+ggsave('../results/figure2c_asis_ed.png',
+       plts[[2]] + 
+         ylim(-2, 0.75) + 
+         ggtitle('AS-IS Cohort') +
+         theme(legend.position = 'bottom',
+               #plot.title = element_blank(),
+               plot.subtitle = element_blank(),
+               text = element_text(size = 12)),
+       height = 7,
+       width = 7,
+       dpi = 300)
+
+```
+
+### Hospitalization Days
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization days per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS_nodq %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization days per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+### Hospitalization Visits
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_vis_ageyear = ifelse(is.na(hosp_vis_ageyear), 0, hosp_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization visits per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS_nodq %>%
+  mutate(hosp_vis_ageyear = ifelse(is.na(hosp_vis_ageyear), 0, hosp_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization visits per year')
+plts[[1]]
+plts[[2]]
+```
+
+
+### Hemoglobin Labs
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS %>%
+  filter(site == 'nemours') %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_hgb",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in hemoglobin average')
+plts[[1]]
+plts[[2]] + ylim(-0.7, 1.5) 
+
+# ggsave('../results/figure3b_squba_hgb.png',
+#        plts[[2]] +
+#          ylim(-0.6, 1) +
+#          ggtitle('DFE Cohort') +
+#          theme(legend.position = 'bottom',
+#                #plot.title = element_blank(),
+#                plot.subtitle = element_blank(),
+#                text = element_text(size = 12)),
+#        height = 7,
+#        width = 7,
+#        dpi = 300)
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS_nodq %>%
+  mutate(avg_hgb = as.numeric(avg_hgb)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_hgb",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Average Hemoglobin per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+
+### MCV Labs
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS %>%
+  #mutate(avg_hgb = ifelse(is.na(avg_hgb), 0, avg_hgb)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_mcv",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Average MCV per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS_nodq %>%
+  mutate(avg_mcv = as.numeric(avg_mcv)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_mcv",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Average MCV per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+### ANC Labs
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_anc",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Average ANC per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS_nodq %>%
+  mutate(avg_anc = as.numeric(avg_anc)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_anc",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Average ANC per year')
+plts[[1]]
+plts[[2]]
+
+```
+
+## Sensitivity Analysis - Good Adherence
+```{r}
+# Create a modified data frame with treatment variables for CS estimation
+blah <- results_tbl('did_primary_vars') %>%
+  group_by(site, person_id) %>%
+  mutate(never_treated = ifelse(any(treated_50 == 1L), FALSE, TRUE),
+         yrs_treated = sum(treated_50)) %>%
+  #ungroup() %>%
+  mutate(mcv_thresh = case_when(age_year < 1 ~ baseline_mcv * 1.1,
+                             age_year >= 1 & age_year < 4 ~ 
+                               (baseline_mcv * 1.1) + 4,
+                             age_year >= 4 ~ (baseline_mcv * 1.1) + 6)) %>%
+  mutate(adherant = case_when(never_treated ~ TRUE,
+                              avg_mcv >= mcv_thresh ~ TRUE,
+                              yrs_treated == 1L ~ TRUE,
+                              TRUE ~ FALSE)) %>%
+  filter(adherant)
+
+df_CS <- blah %>% 
+  collect() %>%
+  group_by(site, person_id) %>%
+  mutate(age_year_first_hu = case_when(any(treated_50 == 1) ~ age_year_first_hu + 1,
+                                       TRUE ~ NA_integer_)) %>%
+  ungroup() %>%
+  mutate(
+    first_HU_age_CS = if_else(is.na(age_year_first_hu), 0, age_year_first_hu), 
+    first_HU_calendar_year_CS = if_else(is.na(age_year_first_hu), 0, calendar_year_first_hu)
+  ) 
+  
+
+blah_nodq <- results_tbl('did_primary_vars_nodq') %>%
+  group_by(site, person_id) %>%
+  mutate(never_treated = ifelse(any(treated_50 == 1L), FALSE, TRUE),
+         yrs_treated = sum(treated_50)) %>%
+  #ungroup() %>%
+  mutate(mcv_thresh = case_when(age_year < 1 ~ baseline_mcv * 1.1,
+                             age_year >= 1 & age_year < 4 ~ 
+                               (baseline_mcv * 1.1) + 4,
+                             age_year >= 4 ~ (baseline_mcv * 1.1) + 6)) %>%
+  mutate(adherant = case_when(never_treated ~ TRUE,
+                              avg_mcv >= mcv_thresh ~ TRUE,
+                              yrs_treated == 1L ~ TRUE,
+                              TRUE ~ FALSE)) %>%
+  filter(adherant)
+  
+df_CS_nodq <- blah_nodq %>% 
+  collect() %>%
+  group_by(site, person_id) %>%
+  mutate(age_year_first_hu = case_when(any(treated_50 == 1) ~ age_year_first_hu + 1,
+                                       TRUE ~ NA_integer_)) %>%
+  ungroup() %>%
+  mutate(
+    first_HU_age_CS = if_else(is.na(age_year_first_hu), 0, age_year_first_hu), 
+    first_HU_calendar_year_CS = if_else(is.na(age_year_first_hu), 0, calendar_year_first_hu)
+  )
+```
+
+:::{.callout-note}
+Patients are included in this cohort if they were (a) never treated with hydroxyurea (controls), (b) were treated for only one age year, or (c) exhibited an average annual MCV value that was 110% of the baseline MCV value (recorded on the same date or within the year prior to hydroxyurea initiation)
+:::
+
+### ED Visits
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_ed <- df_CS %>%
+  mutate(ed_vis_ageyear = ifelse(is.na(ed_vis_ageyear), 0, ed_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "ed_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in ED visits per year', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_ed <- df_CS_nodq %>%
+  mutate(ed_vis_ageyear = ifelse(is.na(ed_vis_ageyear), 0, ed_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "ed_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_ed, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in ED visits per year', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+
+```
+
+### Hospitalization Days
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization days per year', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS_nodq %>%
+  mutate(hosp_days_ageyear = ifelse(is.na(hosp_days_ageyear), 0, hosp_days_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_days_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization days per year', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+
+```
+
+### Hospitalization Visits
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS %>%
+  mutate(hosp_vis_ageyear = ifelse(is.na(hosp_vis_ageyear), 0, hosp_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization visits per year', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hosp <- df_CS_nodq %>%
+  mutate(hosp_vis_ageyear = ifelse(is.na(hosp_vis_ageyear), 0, hosp_vis_ageyear)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "hosp_vis_ageyear",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hosp, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization visits per year', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+```
+
+
+### Hemoglobin Labs
+#### SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_hgb",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in hemoglobin average', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]] + ylim(-1, 1.5)
+
+ggsave('../results/figure3d_adherent_hgb.png',
+       plts[[2]] +
+         ylim(-1, 1.5) +
+         ggtitle('DFE Adherent Cohort') +
+         theme(legend.position = 'bottom',
+               #plot.title = element_blank(),
+               plot.subtitle = element_blank(),
+               text = element_text(size = 12)),
+       height = 7,
+       width = 7,
+       dpi = 300)
+
+```
+
+#### Non-SQUBA Cohort
+```{r}
+
+#### ED days
+df_hgb <- df_CS_nodq %>%
+  mutate(avg_hgb = as.numeric(avg_hgb)) %>%
+  filter(age_year >= 0) %>%
+  mutate(age_year = age_year + 1)
+
+did1_attgt <- att_gt(
+  yname = "avg_hgb",   
+  tname = "age_year", 
+  idname = "person_id", 
+  gname = "first_HU_age_CS", 
+  data = df_hgb, 
+  # xformla = xformula,  # Uncomment to include covariates
+  est_method = "dr", 
+  faster_mode = FALSE,
+  panel = TRUE, 
+  allow_unbalanced_panel = TRUE, 
+  control_group = "notyettreated"
+)
+
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in hemoglobin average', model_name = 'adherent patients')
+plts[[1]]
+plts[[2]]
+
+ggsave('../results/supp_figure1_asis_adherent_hgb.png',
+       plts[[2]] +
+         ylim(-1.5, 1.5) +
+         ggtitle('AS-IS Adherent Cohort') +
+         theme(legend.position = 'bottom',
+               #plot.title = element_blank(),
+               plot.subtitle = element_blank(),
+               text = element_text(size = 12)),
+       height = 7,
+       width = 7,
+       dpi = 300)
+
+```
