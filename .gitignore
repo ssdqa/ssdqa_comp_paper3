@@ -8,3 +8,4 @@
 .Renviron
 .Rproj.user
 specs/*source_value*
+specs/site_anon_map.csv

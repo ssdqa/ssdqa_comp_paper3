@@ -1,0 +1,8 @@
+concept_id,concept_name,concept_code,vocabulary_id,cluster
+40485018,Acute sickle cell splenic sequestration crisis,444108000,SNOMED,SCA Unspecified
+26942,Hemoglobin SS disease with crisis,417425009,SNOMED,HbSS
+30683,Hemoglobin SS disease without crisis,416180004,SNOMED,HbSS
+4209085,Hemoglobin SS disease with vasoocclusive crisis,440206000,SNOMED,HbSS
+4130068,Sickle cell-beta^0^-thalassemia,127043001,SNOMED,HbSB0
+4131913,Sickle cell-delta beta^0^-thalassemia,127044007,SNOMED,HbSB0
+22281,Sickle cell-hemoglobin SS disease,127040003,SNOMED,HbSS

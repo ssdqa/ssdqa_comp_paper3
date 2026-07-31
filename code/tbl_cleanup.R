@@ -10,8 +10,13 @@ tbls_drop <- tbls[!tbls %in% c('dx_sca', 'dx_scd_no_sca', 'rx_hydroxyurea', 'lab
                                'pv_cs_w_date', 'sca_attrition_cohort_r4', 'ssc_comparison_cohort_r4',
                                'sca_attrition_cohort_r5', 'sca_round7_cohort', 'step3_cohort', 
                                'final_cohort_precensor', 'final_cohort_censored', 'de_hydroxyurea_windows',
-                               'hu_visits_labelled', 'did_primary_vars')]
+                               'hu_visits_labelled', 'did_primary_vars', 'first_hu_dat',
+                               'bl_labs', 'ay_avgs', 'sca_attrition_cohort')]
 tbls_drop <- tbls_drop[!grepl('^cdm_', tbls_drop)]
+tbls_drop <- tbls_drop[!grepl('^nodq', tbls_drop)]
+tbls_drop <- tbls_drop[!grepl('^ssc', tbls_drop)]
+tbls_drop <- tbls_drop[!grepl('^de', tbls_drop)]
+tbls_drop <- tbls_drop[!grepl('_nodq$', tbls_drop)]
 
 for(i in tbls_drop){
   

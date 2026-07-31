@@ -628,9 +628,21 @@ did1_attgt <- att_gt(
   control_group = "notyettreated"
 )
 
-plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization visits per year')
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in number of hospitalizations per year')
 plts[[1]]
 plts[[2]]
+
+# ggsave('../results/supp_figure2b_squba_ipvis.png',
+#        plts[[2]] +
+#          ylim(-1.8, 1.8) +
+#          ggtitle('DFE Cohort') +
+#          theme(legend.position = 'bottom',
+#                #plot.title = element_blank(),
+#                plot.subtitle = element_blank(),
+#                text = element_text(size = 12)),
+#        height = 7,
+#        width = 7,
+#        dpi = 300)
 
 ```
 
@@ -657,9 +669,21 @@ did1_attgt <- att_gt(
   control_group = "notyettreated"
 )
 
-plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in Hospitalization visits per year')
+plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in number of hospitalizations per year')
 plts[[1]]
 plts[[2]]
+
+ggsave('../results/supp_figure2c_asis_ipvis.png',
+       plts[[2]] +
+         ylim(-1.8, 1.8) +
+         ggtitle('AS-IS Cohort') +
+         theme(legend.position = 'bottom',
+               #plot.title = element_blank(),
+               plot.subtitle = element_blank(),
+               text = element_text(size = 12)),
+       height = 7,
+       width = 7,
+       dpi = 300)
 ```
 
 
@@ -1158,7 +1182,7 @@ plts <- did_plts(did_dat = did1_attgt, ylab = 'Change in hemoglobin average', mo
 plts[[1]]
 plts[[2]]
 
-ggsave('../results/supp_figure1_asis_adherent_hgb.png',
+ggsave('../results/jamia/supp_figure1_asis_adherent_hgb.png',
        plts[[2]] +
          ylim(-1.5, 1.5) +
          ggtitle('AS-IS Adherent Cohort') +

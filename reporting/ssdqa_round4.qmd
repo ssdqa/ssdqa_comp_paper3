@@ -17,6 +17,7 @@ library(gt)
 library(patchwork)
 library(ggiraph)
 library(ggplot2)
+library(RPresto)
 
 setwd(here::here())
 source('setup/setup.R')
@@ -705,6 +706,15 @@ qvd_output(process_output = results_tbl('qvd_ms_exp_cs_r4') %>% collect() %>%
            display_outliers = TRUE)
 
 ```
+
+# Hemoglobin
+```{r}
+
+qvd_output(process_output = results_tbl('qvd_ms_exp_cs_r4') %>% collect() %>%
+             filter(grepl('HGB', value_type)),
+           display_outliers = TRUE)
+
+```
 :::
 
 ### Multi Site, Exploratory, Longitudinal
@@ -742,6 +752,18 @@ grph <- qvd_output(process_output = results_tbl('qvd_ms_exp_la_r4') %>% collect(
              filter(grepl('SCD', value_type)),
            display_outliers = TRUE,
            summary_stat = 'median') + ggtitle('Median SCD Quantitative Result Value Across Time')
+
+make_interactive_squba(grph)
+
+```
+
+# Hemoglobin
+```{r}
+
+grph <- qvd_output(process_output = results_tbl('qvd_ms_exp_la_r4') %>% collect() %>%
+             filter(grepl('HGB', value_type)),
+           display_outliers = TRUE,
+           summary_stat = 'median') + ggtitle('Median HGB Quantitative Result Value Across Time')
 
 make_interactive_squba(grph)
 

@@ -12,3 +12,5 @@ MCV (femtoliter),measurement_labs,value_as_number,measurement_date,measurement_c
 MCV (no unit),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_mcv,"unit_concept_id %in% c(0, 44814650)"
 SCD Quant (percent),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_scd,unit_concept_id == 8554
 SCD Quant (no unit),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_scd,"unit_concept_id %in% c(0, 44814650)"
+HGB (g/dL),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_serum_hemoglobin,unit_concept_id == 8713
+HGB (no unit),measurement_labs,value_as_number,measurement_date,measurement_concept_id,lab_serum_hemoglobin,"unit_concept_id %in% c(0, 44814650)"
